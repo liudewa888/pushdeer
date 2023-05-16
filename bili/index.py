@@ -28,7 +28,7 @@ def monitor_bili_moda():
     global noLogin
     if noLogin:
         return
-    cookie = 'SESSDATA=6f01d815%2C1699699321%2C4b41b%2A51'
+    cookie = ''
     url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?offset=&host_mid=525121722&timezone_offset=-480&features=itemOpusStyle'
     headers={
         'cookie':cookie
