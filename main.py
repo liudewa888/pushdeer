@@ -1,30 +1,24 @@
-import atexit
 import time
 from datetime import datetime
 
 from script.push import push
-from greenTea.index import monitor_greenTea
-from bili.index import monitor_bili,monitor_bili_moda
-from liqun.index import monitor_liqun
+from bili.index import monitor_bili,monitor_bili_moda,monitor_bili_test,monitor_bili_moda_live
 ii = 0
 def main():
     global ii
     while(True):
       now = datetime.now()
       print("当前轮次" + str(ii) +': ', now.strftime("%Y-%m-%d %H:%M:%S"))
-      # monitor_greenTea()
-      # monitor_liqun()
       monitor_bili()
       monitor_bili_moda()
+      monitor_bili_test()
+      monitor_bili_moda_live()
       ii = ii + 1
-      time.sleep(60 * 5)
-      # time.sleep(10)
-
-def cleanup():
-   global ii
-   if ii > 10:
-      push('监控异常退出','请登录检查')
-atexit.register(cleanup)
+      time.sleep(60 * 3)
 if __name__ == '__main__':
     print('------ 开始监控 ------')
-    main()
+    try:
+      main()
+    except Exception as e:
+      print("程序异常退出", e)
+      push('程序异常退出','请登录远程查看原因')
