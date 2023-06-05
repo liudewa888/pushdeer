@@ -1,11 +1,10 @@
 import requests
 from script.push import push
 noLogin = False
-cookie_bili =''
 headers_bili={
     'Accept': 'application/json, text/plain, */*',
     'Connection': 'keep-alive',
-    'Cookie': cookie_bili,
+    'Cookie': '',
     'Host': 'api.bilibili.com',
     'Origin': 'https://space.bilibili.com',
     'Referer': 'https://space.bilibili.com/525121722/dynamic',

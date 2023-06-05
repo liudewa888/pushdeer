@@ -1,7 +1,6 @@
 # 通知
 import requests
-TOKEN = ''
-
+send_key = {}
 def push(type,text):
-  url = f'https://api2.pushdeer.com/message/push?pushkey={TOKEN}&text={type}: {text}'
+  url = f'https://api2.pushdeer.com/message/push?pushkey={send_key["token"]}&text={type}: {text}'
   requests.get(url)
