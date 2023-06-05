@@ -1,3 +1,4 @@
+import sys
 import time
 import configparser
 from datetime import datetime
@@ -7,8 +8,12 @@ from bili.index import headers_bili,monitor_bili,monitor_bili_moda,monitor_bili_
 def readConfig():
     config = configparser.ConfigParser()
     config.read('./config.ini')
-    send_key['token'] = config['data']['send_key']
-    headers_bili['Cookie'] = config['data']['cookie_bili']
+    if 'data' in config:
+      send_key['token'] = config['data']['send_key']
+      headers_bili['Cookie'] = config['data']['cookie_bili']
+    else:
+      print('配置文件未找到或格式错误')
+      sys.exit(0)
 ii = 0
 def main():
     global ii
