@@ -33,14 +33,14 @@ def monitor_bili():
     type = list['type'].split('_')[2]
     text = list['modules']['module_dynamic']['desc']
     if text:
-        text = text['text'][0:16]
+        text = text['text']
     else:
         text = list['modules']['module_dynamic']['major']
-        if text:
-            text = text['archive']['title'][0:16]
+        if 'archive' in text:
+            text = text['archive']['title']
     if text:
-      text = text.replace('\n','')
-      print('莫大最新动态',text)
+      text = text.replace('\n',' ')[0:16]
+    print('莫大最新动态',text)
     if(m_tg == ''):
         m_tg = id
     elif(m_tg != id):
@@ -76,11 +76,12 @@ def monitor_bili_moda():
         reply = res['data']['top_replies'][0]
         top_id = reply['rpid_str']
         name = reply['member']['uname']
-        print('莫大最新置顶评论 ', name +' ' +reply['content']['message'])
+        msg = reply['content']['message'].replace('\n',' ')[0:16]
+        print('莫大最新置顶评论 ', name +' ' +msg)
         if m_tg_top == '':
             m_tg_top = top_id
         elif top_id != m_tg_top:
-            top_msg = reply['content']['message'][0:16]
+            top_msg = msg
             push('莫大最新置顶评论 '+name,top_msg)
             m_tg_top = top_id
     else:
@@ -103,11 +104,13 @@ def monitor_bili_test():
     text = list[0]['modules']['module_dynamic']['desc']
     name =list[0]['modules']['module_author']['name']
     if text:
-        text = text['text'][0:16]
+        text = text['text']
     else:
         text = list[0]['modules']['module_dynamic']['major']
-        if text:
-            text = text['archive']['title'][0:16]
+        if 'archive' in text:
+            text = text['archive']['title']
+    if text:
+      text = text.replace('\n',' ')[0:16]
     print('关注最新动态 ',name +' '+ text)
     if(m_tg_test == ''):
         m_tg_test = id
