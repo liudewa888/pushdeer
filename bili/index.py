@@ -38,7 +38,9 @@ def monitor_bili():
         text = list['modules']['module_dynamic']['major']
         if 'archive' in text:
             text = text['archive']['title']
-    if text:
+        elif 'ugc_season' in text:
+            text = text['ugc_season']['title']
+    if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:16]
     print('莫大最新动态',text)
     if(m_tg == ''):
@@ -76,7 +78,9 @@ def monitor_bili_moda():
         reply = res['data']['top_replies'][0]
         top_id = reply['rpid_str']
         name = reply['member']['uname']
-        msg = reply['content']['message'].replace('\n',' ')[0:16]
+        msg = reply['content']['message']
+        if msg and isinstance(msg,str):
+            msg = msg.replace('\n',' ')[0:16]
         print('莫大最新置顶评论 ', name +' ' +msg)
         if m_tg_top == '':
             m_tg_top = top_id
@@ -109,7 +113,9 @@ def monitor_bili_test():
         text = list[0]['modules']['module_dynamic']['major']
         if 'archive' in text:
             text = text['archive']['title']
-    if text:
+        elif 'ugc_season' in text:
+            text = text['ugc_season']['title']
+    if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:16]
     print('关注最新动态 ',name +' '+ text)
     if(m_tg_test == ''):
