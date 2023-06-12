@@ -42,6 +42,8 @@ def monitor_bili():
             text = text['ugc_season']['title']
     if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:16]
+    else:
+      return
     print('莫大最新动态',text)
     if(m_tg == ''):
         m_tg = id
@@ -81,6 +83,8 @@ def monitor_bili_moda():
         msg = reply['content']['message']
         if msg and isinstance(msg,str):
             msg = msg.replace('\n',' ')[0:16]
+        else:
+          return
         print('莫大最新置顶评论 ', name +' ' +msg)
         if m_tg_top == '':
             m_tg_top = top_id
@@ -117,6 +121,8 @@ def monitor_bili_test():
             text = text['ugc_season']['title']
     if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:16]
+    else:
+        return
     print('关注最新动态 ',name +' '+ text)
     if(m_tg_test == ''):
         m_tg_test = id
