@@ -1,6 +1,7 @@
 import sys
 import time
 import configparser
+import traceback
 from datetime import datetime
 from script.push import send_key,push
 from bili.index import headers_bili,monitor_bili,monitor_bili_moda,monitor_bili_test,monitor_bili_moda_live
@@ -32,5 +33,8 @@ if __name__ == '__main__':
       readConfig()
       main()
     except Exception as e:
+      tb = traceback.extract_tb(e.__traceback__)
+      for item in tb:
+        print(item)
       print("程序异常退出", e)
       push('程序异常退出','请登录远程查看原因')
