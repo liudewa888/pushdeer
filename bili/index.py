@@ -132,8 +132,11 @@ def monitor_bili_test():
 m_live_flag = False
 def monitor_bili_moda_live():
     global m_live_flag
-    url = 'https://api.bilibili.com/x/space/wbi/acc/info?mid=525121722&token=&platform=web&web_location=1550101&w_rid=7c4a021e017471099db24a5f5e916d8f&wts=1685791381'
+    url = 'https://api.bilibili.com/x/space/wbi/acc/info?mid=525121722&token=&platform=web&web_location=1550101&w_rid=74291355eec2c401569f91047e53828e&wts=1687319296'
     res = requests.get(url,headers=headers_bili).json()
+    if 'data' not in res:
+        push('直播状态','莫大链接rid失效')
+        return
     live = res['data']['live_room']
     if live:
         live_status = live['liveStatus']
