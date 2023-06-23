@@ -24,6 +24,8 @@ def monitor_bili():
     url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?offset=&host_mid=525121722&timezone_offset=-480&features=itemOpusStyle'
     res = requests.get(url,headers=headers_bili).json()
     # print(res)
+    if 'data' not in res:
+      return
     list = res['data']['items'][0]
     if 'module_tag' in list['modules']:
       m_module_tag = list['modules']['module_tag']
@@ -61,6 +63,8 @@ def monitor_bili_moda():
         return
     url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?offset=&host_mid=525121722&timezone_offset=-480&features=itemOpusStyle'
     res = requests.get(url,headers=headers_bili).json()
+    if 'data' not in res:
+      return
     list = res['data']['items']
     bool = False
     jump_id = ''
@@ -106,6 +110,8 @@ def monitor_bili_test():
     url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all?timezone_offset=-480&type=all&page=1&features=itemOpusStyle'
     # res = requests.get(url,headers=headers,verify=False).json()
     res = requests.get(url,headers=headers_bili).json()
+    if 'data' not in res:
+      return
     list = res['data']['items']
     id = list[0]['id_str']
     type = list[0]['type'].split('_')[2]
