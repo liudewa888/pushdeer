@@ -81,6 +81,8 @@ def monitor_bili_moda():
     if bool:
         url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type=17'
         res = requests.get(url,headers=headers_bili).json()
+        if 'data' not in res:
+          return
         reply = res['data']['top_replies'][0]
         top_id = reply['rpid_str']
         name = reply['member']['uname']
