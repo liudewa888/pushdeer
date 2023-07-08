@@ -68,6 +68,7 @@ def monitor_bili_moda():
     list = res['data']['items']
     bool = False
     jump_id = ''
+    jump_url = ''
     for i in range(len(list)):
         if 'module_tag' in list[i]['modules']:
           m_module_tag = list[i]['modules']['module_tag']
@@ -76,7 +77,8 @@ def monitor_bili_moda():
             readOnly = basic['is_only_fans']
             if readOnly:
               bool = True
-              jump_id = basic['jump_url'].split('/opus/')[1]
+              jump_url = basic['jump_url']
+              jump_id = jump_url.split('/opus/')[1]
             break
     if bool:
         url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type=17'
@@ -96,7 +98,7 @@ def monitor_bili_moda():
             m_tg_top = top_id
         elif top_id != m_tg_top:
             top_msg = msg
-            push('莫大最新置顶评论 '+name,top_msg)
+            push('莫大最新置顶评论 '+name,top_msg,'https:'+jump_url)
             m_tg_top = top_id
     else:
         push('bili cookie 失效','请重新登录')    
@@ -107,6 +109,7 @@ def monitor_bili_test():
     global m_tg_test
     global noLogin
     global headers_bili
+    jump_url = ''
     if noLogin:
         return
     url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all?timezone_offset=-480&type=all&page=1&features=itemOpusStyle'
@@ -116,7 +119,9 @@ def monitor_bili_test():
       return
     list = res['data']['items']
     id = list[0]['id_str']
-    type = list[0]['type'].split('_')[2]
+    basic = list[0]['basic']
+    if 'jump_url' in basic:
+      jump_url = basic['jump_url']
     text = list[0]['modules']['module_dynamic']['desc']
     name =list[0]['modules']['module_author']['name']
     if text:
@@ -125,6 +130,8 @@ def monitor_bili_test():
         text = list[0]['modules']['module_dynamic']['major']
         if 'archive' in text:
             text = text['archive']['title']
+            if 'jump_url' in  text['archive']:
+               jump_url = basic['jump_url']
         elif 'ugc_season' in text:
             text = text['ugc_season']['title']
     if text and isinstance(text,str):
@@ -135,11 +142,15 @@ def monitor_bili_test():
     if(m_tg_test == ''):
         m_tg_test = id
     elif(m_tg_test != id):
-        push('关注最新动态 '+name, text)
+        if jump_url:
+           push('关注最新动态 '+name, text,'https:'+jump_url)
+        else:
+           push('关注最新动态 '+name, text)
         m_tg_test = id
 m_live_flag = False
 def monitor_bili_moda_live():
     global m_live_flag
+   
     url = 'https://api.bilibili.com/x/space/wbi/acc/info?mid=525121722&token=&platform=web&web_location=1550101&w_rid=74291355eec2c401569f91047e53828e&wts=1687319296'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
@@ -149,10 +160,12 @@ def monitor_bili_moda_live():
     if live:
         live_status = live['liveStatus']
         live_room_status = live['roomStatus']
+        live_title = live['title']
+        live_url = live['url']
         print('直播动态','莫大',live_status,live_room_status)
         if(not m_live_flag and live_status == 1):
             print('直播动态','莫大开播了')
-            push('直播动态','莫大开播了')
+            push('直播动态','莫大开播了--'+live_title,live_url)
             m_live_flag = True
         if(live_status == 0):
             m_live_flag = False
