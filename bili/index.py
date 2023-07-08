@@ -129,9 +129,10 @@ def monitor_bili_test():
     else:
         text = list[0]['modules']['module_dynamic']['major']
         if 'archive' in text:
-            text = text['archive']['title']
-            if 'jump_url' in  text['archive']:
-               jump_url = basic['jump_url']
+            archive =  text['archive']
+            if 'jump_url' in  archive:
+               jump_url = archive['jump_url']
+            text = archive['title']
         elif 'ugc_season' in text:
             text = text['ugc_season']['title']
     if text and isinstance(text,str):
