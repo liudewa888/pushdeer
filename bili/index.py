@@ -122,19 +122,21 @@ def monitor_bili_test():
     basic = list[0]['basic']
     if 'jump_url' in basic:
       jump_url = basic['jump_url']
-    text = list[0]['modules']['module_dynamic']['desc']
+    desc = list[0]['modules']['module_dynamic']['desc']
     name =list[0]['modules']['module_author']['name']
-    if text:
-        text = text['text']
-    else:
-        text = list[0]['modules']['module_dynamic']['major']
-        if 'archive' in text:
-            archive =  text['archive']
+    major = list[0]['modules']['module_dynamic']['major']
+    if desc:
+        text = desc['text']
+    if major:
+        if 'archive' in major:
+            archive =  major['archive']
             if 'jump_url' in  archive:
                jump_url = archive['jump_url']
-            text = archive['title']
-        elif 'ugc_season' in text:
-            text = text['ugc_season']['title']
+            if not text:
+              text = archive['title']
+        if 'ugc_season' in major and not text:
+            text = major['ugc_season']['title']
+
     if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:16]
     else:
