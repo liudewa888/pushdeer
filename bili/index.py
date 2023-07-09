@@ -149,10 +149,11 @@ def monitor_bili_test():
            push('关注最新动态 '+name, text)
         m_tg_test = id
 m_live_status = False
+m_live_flag = False
 def monitor_bili_moda_live():
     global m_live_flag
     global m_live_status
-    url = 'https://api.bilibili.com/x/space/wbi/acc/info?mid=525121722&token=&platform=web&web_location=1550101&w_rid=8abd6b745fcdbb75af8da073224b3b5f&wts=1687319296'
+    url = 'https://api.bilibili.com/x/space/wbi/acc/info?mid=525121722&token=&platform=web&web_location=1550101&w_rid=045491671169ffe8a131026b019247d0&wts=1688864515'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
         if not m_live_status:
