@@ -148,15 +148,20 @@ def monitor_bili_test():
         else:
            push('关注最新动态 '+name, text)
         m_tg_test = id
-m_live_flag = False
+m_live_status = False
 def monitor_bili_moda_live():
     global m_live_flag
-   
-    url = 'https://api.bilibili.com/x/space/wbi/acc/info?mid=525121722&token=&platform=web&web_location=1550101&w_rid=74291355eec2c401569f91047e53828e&wts=1687319296'
+    global m_live_status
+    url = 'https://api.bilibili.com/x/space/wbi/acc/info?mid=525121722&token=&platform=web&web_location=1550101&w_rid=8abd6b745fcdbb75af8da073224b3b5f&wts=1687319296'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
-        push('直播状态','莫大链接rid失效')
+        if not m_live_status:
+            push('直播状态','莫大链接rid失效')
+            m_live_status = True
         return
+    else:
+        if m_live_status:
+            m_live_status = False
     live = res['data']['live_room']
     if live:
         live_status = live['liveStatus']
