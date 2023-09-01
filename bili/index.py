@@ -85,7 +85,10 @@ def monitor_bili_moda():
         res = requests.get(url,headers=headers_bili).json()
         if 'data' not in res:
           return
-        reply = res['data']['top_replies'][0]
+        data = res['data']
+        if 'top_replies' not in data:
+          return
+        reply = data['top_replies'][0]
         top_id = reply['rpid_str']
         name = reply['member']['uname']
         msg = reply['content']['message']
@@ -110,6 +113,7 @@ def monitor_bili_test():
     global noLogin
     global headers_bili
     jump_url = ''
+    text = ''
     if noLogin:
         return
     url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all?timezone_offset=-480&type=all&page=1&features=itemOpusStyle'

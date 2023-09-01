@@ -2,6 +2,7 @@ import sys
 import time
 import configparser
 import traceback
+import logging
 from datetime import datetime
 from script.push import send_key,push
 from bili.index import headers_bili,monitor_bili,monitor_bili_moda,monitor_bili_test,monitor_bili_moda_live
@@ -15,6 +16,11 @@ def readConfig():
     else:
       print('配置文件未找到或格式错误')
       sys.exit(0)
+# 定入日志
+logging.basicConfig(filename='error.log',format='%(asctime)s - %(levelname)s - %(message)s', level=logging.ERROR)
+def Wlog(text):
+ logging.error(text)
+
 ii = 0
 def main():
     global ii
@@ -34,7 +40,8 @@ if __name__ == '__main__':
       main()
     except Exception as e:
       tb = traceback.extract_tb(e.__traceback__)
+      Wlog(tb)
       for item in tb:
         print(item)
       print("程序异常退出", e)
-      push('程序异常退出','请登录远程查看原因')
+      # push('程序异常退出','请登录远程查看原因')
