@@ -1,7 +1,6 @@
 import sys
 import time
 import configparser
-import traceback
 import logging
 from datetime import datetime
 from script.push import send_key,push
@@ -19,7 +18,7 @@ def readConfig():
 # 定入日志
 logging.basicConfig(filename='error.log',format='%(asctime)s - %(levelname)s - %(message)s', level=logging.ERROR)
 def Wlog(text):
- logging.error(text)
+ logging.error(text,exc_info=True)
 
 ii = 0
 def main():
@@ -39,9 +38,6 @@ if __name__ == '__main__':
       readConfig()
       main()
     except Exception as e:
-      tb = traceback.extract_tb(e.__traceback__)
-      Wlog(tb)
-      for item in tb:
-        print(item)
+      Wlog('')
       print("程序异常退出", e)
       # push('程序异常退出','请登录远程查看原因')
