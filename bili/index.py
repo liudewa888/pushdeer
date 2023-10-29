@@ -69,12 +69,14 @@ def monitor_bili_moda():
     bool = False
     jump_id = ''
     jump_url = ''
+    readOnly= False
     for i in range(len(list)):
         if 'module_tag' in list[i]['modules']:
           m_module_tag = list[i]['modules']['module_tag']
           if(m_module_tag['text']=='置顶'):
             basic = list[i]['basic']
-            readOnly = basic['is_only_fans']
+            if 'is_only_fans' in basic:
+              readOnly = basic['is_only_fans']
             if readOnly:
               bool = True
               jump_url = basic['jump_url']
