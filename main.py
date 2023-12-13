@@ -16,7 +16,7 @@ def readConfig():
       print('配置文件未找到或格式错误')
       sys.exit(0)
 # 定入日志
-logging.basicConfig(filename='error.log',format='%(asctime)s - %(levelname)s - %(message)s', level=logging.ERROR)
+logging.basicConfig(filename='error.log',format='\n%(asctime)s - %(levelname)s - %(message)s', level=logging.ERROR)
 def Wlog(text):
  logging.error(text,exc_info=True)
 
@@ -28,7 +28,7 @@ def main():
       print("当前轮次" + str(ii) +': ', now.strftime("%Y-%m-%d %H:%M:%S"))
       monitor_bili()
       monitor_bili_moda()
-      monitor_bili_test()
+      # monitor_bili_test()
       monitor_bili_moda_live()
       ii = ii + 1
       time.sleep(60 * 3)
@@ -40,4 +40,4 @@ if __name__ == '__main__':
     except Exception as e:
       Wlog('')
       print("程序异常退出", e)
-      # push('程序异常退出','请登录远程查看原因')
+      push('程序异常退出','请登录远程查看原因')
