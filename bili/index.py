@@ -1,5 +1,8 @@
 import requests
+import time
 from script.push import push
+push_text_len = 50
+bili_moda_mid = 525121722
 noLogin = False
 headers_bili={
     'Accept': 'application/json, text/plain, */*',
@@ -43,7 +46,7 @@ def monitor_bili():
         elif 'ugc_season' in text:
             text = text['ugc_season']['title']
     if text and isinstance(text,str):
-      text = text.replace('\n',' ')[0:16]
+      text = text.replace('\n',' ')[0:push_text_len]
     else:
       return
     print('莫大最新动态',text)
@@ -88,14 +91,16 @@ def monitor_bili_moda():
         if 'data' not in res:
           return
         data = res['data']
-        if 'top_replies' not in data:
+        if 'top_replies' not in data or len(data['top_replies']) == 0:
           return
         reply = data['top_replies'][0]
         top_id = reply['rpid_str']
         name = reply['member']['uname']
         msg = reply['content']['message']
+        rcount = reply['rcount']
+        rpid = reply['rpid_str']
         if msg and isinstance(msg,str):
-            msg = msg.replace('\n',' ')[0:16]
+            msg = msg.replace('\n',' ')[0:push_text_len]
         else:
           return
         print('莫大最新置顶评论 ', name +' ' +msg)
@@ -105,6 +110,7 @@ def monitor_bili_moda():
             top_msg = msg
             push('莫大最新置顶评论 '+name,top_msg,'https:'+jump_url)
             m_tg_top = top_id
+        monitor_bili_moda_reply({'oid':jump_id,'link':jump_url,'root':rpid,'rcount':rcount})
     else:
         push('bili cookie 失效','请重新登录')    
         noLogin = True
@@ -144,7 +150,7 @@ def monitor_bili_test():
             text = major['ugc_season']['title']
 
     if text and isinstance(text,str):
-      text = text.replace('\n',' ')[0:16]
+      text = text.replace('\n',' ')[0:push_text_len]
     else:
         return
     print('关注最新动态 ',name +' '+ text)
@@ -165,7 +171,7 @@ def monitor_bili_moda_live():
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
         if not m_live_status:
-            push('直播状态','莫大链接rid失效')
+            push('直播动态','莫大链接rid失效')
             m_live_status = True
         return
     else:
@@ -184,3 +190,54 @@ def monitor_bili_moda_live():
             m_live_flag = True
         if(live_status == 0):
             m_live_flag = False
+start_reply={'rpid':-1,'mid':-1}
+end_reply={'rpid':-1,'mid':-1}
+def monitor_bili_moda_reply(options):
+  global start_reply
+  global end_reply
+  end_reply_rpid = int(end_reply['rpid'])
+  start_reply_rpid = int(start_reply['rpid'])
+  break_flag = False
+  pageSize = 20
+  pageTotal = options['rcount'] // pageSize + 1
+  for pageIndex in range(pageTotal,0,-1):
+    time.sleep(1)
+    url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type=17&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
+    res = requests.get(url,headers=headers_bili).json()
+    if 'data' not in res:
+      return
+    data = res['data']
+    replies = data['replies']
+    root = data['root']
+    root_msg = root['content']['message']
+    if root_msg and isinstance(root_msg,str):
+      root_msg = root_msg.replace('\n',' ')[0:push_text_len]
+    le = len(replies)-1
+    for i in range(le,-1,-1):
+      current_start_reply_rpid = int(start_reply['rpid'])
+      reply = replies[i]
+      rpid = reply['rpid_str']
+      mid = reply['mid']
+      msg = reply['content']['message']
+      rpid_int = int(rpid)
+      if pageIndex == pageTotal and i == le:
+        print('评论数量 ',options['rcount'],' 评论最新回复rpid ',end_reply['rpid'])
+        if end_reply_rpid < rpid_int:
+          ctime = reply['ctime']
+          end_reply = {'ctime':ctime,'mid':mid,'rpid':rpid}
+      if mid == bili_moda_mid and start_reply_rpid < rpid_int:
+        ctime = reply['ctime']
+        if current_start_reply_rpid < rpid_int:
+          start_reply = {'ctime':ctime,'mid':mid,'rpid':rpid}
+        text = msg
+        if text and isinstance(text,str):
+          text = text.replace('\n',' ')[0:push_text_len]
+        if start_reply_rpid != -1:
+          print('莫大最新回复 ',text)
+          push('莫大最新回复 ',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
+      if rpid_int <= end_reply_rpid or end_reply_rpid == -1:
+        break_flag = True
+        break
+    
+    if(break_flag):
+      break

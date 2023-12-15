@@ -1,5 +1,6 @@
 import sys
 import time
+import random
 import configparser
 import logging
 from datetime import datetime
@@ -31,7 +32,8 @@ def main():
       # monitor_bili_test()
       monitor_bili_moda_live()
       ii = ii + 1
-      time.sleep(60 * 3)
+      s = random.randint(30,80)
+      time.sleep(s * 2)
 if __name__ == '__main__':
     print('------ 开始监控 ------')
     try:
