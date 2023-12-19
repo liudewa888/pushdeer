@@ -1,5 +1,6 @@
 import requests
 import time
+import logging
 from script.push import push
 push_text_len = 50
 bili_moda_mid = 525121722
@@ -26,7 +27,6 @@ def monitor_bili():
     global headers_bili
     url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?offset=&host_mid=525121722&timezone_offset=-480&features=itemOpusStyle'
     res = requests.get(url,headers=headers_bili).json()
-    # print(res)
     if 'data' not in res:
       return
     list = res['data']['items'][0]
@@ -49,7 +49,7 @@ def monitor_bili():
       text = text.replace('\n',' ')[0:push_text_len]
     else:
       return
-    print('莫大最新动态',text)
+    logging.info('莫大最新动态')
     if(m_tg == ''):
         m_tg = id
     elif(m_tg != id):
@@ -91,7 +91,7 @@ def monitor_bili_moda():
         if 'data' not in res:
           return
         data = res['data']
-        if 'top_replies' not in data or len(data['top_replies']) == 0:
+        if 'top_replies' not in data:
           return
         reply = data['top_replies'][0]
         top_id = reply['rpid_str']
@@ -103,7 +103,7 @@ def monitor_bili_moda():
             msg = msg.replace('\n',' ')[0:push_text_len]
         else:
           return
-        print('莫大最新置顶评论 ', name +' ' +msg)
+        logging.info('最新置顶评论')
         if m_tg_top == '':
             m_tg_top = top_id
         elif top_id != m_tg_top:
@@ -153,7 +153,7 @@ def monitor_bili_test():
       text = text.replace('\n',' ')[0:push_text_len]
     else:
         return
-    print('关注最新动态 ',name +' '+ text)
+    logging('关注最新动态')
     if(m_tg_test == ''):
         m_tg_test = id
     elif(m_tg_test != id):
@@ -183,9 +183,8 @@ def monitor_bili_moda_live():
         live_room_status = live['roomStatus']
         live_title = live['title']
         live_url = live['url']
-        print('直播动态','莫大',live_status,live_room_status)
+        logging.info('直播动态')
         if(not m_live_flag and live_status == 1):
-            print('直播动态','莫大开播了')
             push('直播动态','莫大开播了--'+live_title,live_url)
             m_live_flag = True
         if(live_status == 0):
@@ -221,7 +220,7 @@ def monitor_bili_moda_reply(options):
       msg = reply['content']['message']
       rpid_int = int(rpid)
       if pageIndex == pageTotal and i == le:
-        print('评论数量 ',options['rcount'],' 评论最新回复rpid ',end_reply['rpid'])
+        logging.info('评论数量: ' + str(options['rcount']))
         if end_reply_rpid < rpid_int:
           ctime = reply['ctime']
           end_reply = {'ctime':ctime,'mid':mid,'rpid':rpid}
@@ -233,7 +232,6 @@ def monitor_bili_moda_reply(options):
         if text and isinstance(text,str):
           text = text.replace('\n',' ')[0:push_text_len]
         if start_reply_rpid != -1:
-          print('莫大最新回复 ',text)
           push('莫大最新回复 ',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
       if rpid_int <= end_reply_rpid or end_reply_rpid == -1:
         break_flag = True
