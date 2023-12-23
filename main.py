@@ -4,7 +4,7 @@ import random
 import configparser
 import logging
 from script.push import send_key,push
-from bili.index import headers_bili,monitor_bili,monitor_bili_moda,monitor_bili_test,monitor_bili_moda_live
+from bili.index import headers_bili,monitor_bili,monitor_bili_moda,monitor_bili_test,monitor_bili_moda_live,monitor_bili_moda_live_roomId
 # 读取配置文件
 def readConfig():
     config = configparser.ConfigParser()
@@ -28,7 +28,8 @@ def main():
       monitor_bili()
       monitor_bili_moda()
       # monitor_bili_test()
-      monitor_bili_moda_live()
+      # monitor_bili_moda_live()
+      monitor_bili_moda_live_roomId()
       ii = ii + 1
       s = random.randint(30,80)
       time.sleep(s * 2)
@@ -39,5 +40,5 @@ if __name__ == '__main__':
       main()
     except Exception as e:
       Wlog('')
-      logging.error('程序异常退出')
+      print('程序异常退出',e)
       # push('程序异常退出','请登录远程查看日志')
