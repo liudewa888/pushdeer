@@ -58,7 +58,7 @@ def monitor_bili():
       text = text.replace('\n',' ')[0:push_text_len]
     else:
       return
-    logging.info('莫大最新动态')
+    # logging.info('莫大最新动态')
     if(m_tg == ''):
         m_tg = id
     elif(m_tg != id):
@@ -112,7 +112,7 @@ def monitor_bili_moda():
             msg = msg.replace('\n',' ')[0:push_text_len]
         else:
           return
-        logging.info('最新置顶评论')
+        # logging.info('最新置顶评论')
         if m_tg_top == '':
             m_tg_top = top_id
         elif top_id != m_tg_top:
@@ -193,7 +193,7 @@ def monitor_bili_moda_live():
         live_room_status = live['roomStatus']
         live_title = live['title']
         live_url = live['url']
-        logging.info('直播动态')
+        # logging.info('直播动态')
         if(not m_live_flag and live_status == 1):
             live_start_time = datetime.now()
             m_live_flag = True
@@ -233,7 +233,7 @@ def monitor_bili_moda_reply(options):
       msg = reply['content']['message']
       rpid_int = int(rpid)
       if pageIndex == pageTotal and i == le:
-        logging.info('评论数量: ' + str(options['rcount']))
+        # logging.info('评论数量: ' + str(options['rcount']))
         if end_reply_rpid < rpid_int:
           ctime = reply['ctime']
           end_reply = {'ctime':ctime,'mid':mid,'rpid':rpid}
@@ -279,7 +279,7 @@ def monitor_bili_moda_live_roomId():
     if live:
         live_status = live['live_status']
         live_time = live['live_time']
-        logging.info('直播动态')
+        # logging.info('直播动态')
         if(not m_live_flag and live_status == 1):
             live_start_time = datetime.now()
             m_live_flag = True
