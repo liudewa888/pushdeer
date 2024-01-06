@@ -16,3 +16,17 @@ def push(type,text,link=None,desc=None):
       'desp': desp
     }
     requests.post(url,data)
+
+
+def push_dynamic(type,content,link=None,ctime=None):
+  # url="http://127.0.0.1/moda/dynamic/add"
+  url="http://127.0.0.1:9080/dynamic/add"
+  if content and isinstance(content,str):
+    content = content[0:20]
+  data = {
+    'type': type,
+    'content': content,
+    'link': link,
+    'ctime': ctime
+  }
+  requests.post(url,data)

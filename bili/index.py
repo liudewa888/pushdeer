@@ -1,11 +1,12 @@
 import requests
 import time
 from datetime import datetime
-import logging
 import copy  
-from script.push import push
+from script.push import push,push_dynamic
 push_text_len = 50
-bili_moda_mid = 525121722
+bili_moda_mid = '525121722'
+bili_live_room_id = '23229268'
+bili_moda_opus_link = 'https://www.bilibili.com/opus/'
 live_start_time = None
 noLogin = False
 headers_bili={
@@ -23,13 +24,16 @@ headers_bili={
     'Sec-Fetch-Site': 'same-site',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57'
 }
+# 莫大动态
 m_tg = ''
-def monitor_bili():
+def monitor_bili_moda_dynamic():
     global m_tg
     global noLogin
     global headers_bili
+    global bili_moda_mid
     jump_url = ''
-    url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?offset=&host_mid=525121722&timezone_offset=-480&features=itemOpusStyle'
+    ctime = ''
+    url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={bili_moda_mid}'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
       return
@@ -39,8 +43,10 @@ def monitor_bili():
       if(m_module_tag['text']=='置顶'):
           list = res['data']['items'][1]
     id = list['id_str']
-    type = list['type'].split('_')[2]
+    jump_url = bili_moda_opus_link + id
     text = list['modules']['module_dynamic']['desc']
+    module_author = list['modules']['module_author']
+    ctime = module_author['pub_ts']
     if text:
         text = text['text']
     else:
@@ -50,51 +56,44 @@ def monitor_bili():
         elif 'ugc_season' in text:
             text = text['ugc_season']['title']
         elif 'opus' in text:
-           opus = text['opus']
-           jump_url = 'https:' + opus['jump_url']           
+           opus = text['opus']       
            if 'summary' in opus:
               text = opus['summary']['text']           
     if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:push_text_len]
     else:
       return
-    # logging.info('莫大最新动态')
     if(m_tg == ''):
         m_tg = id
     elif(m_tg != id):
-        push('莫大最新动态',text,jump_url)
+        push('动态: ',text,jump_url)
+        push_dynamic(1,text,jump_url,ctime)
         m_tg = id
-
+    push_dynamic(1,text,jump_url,ctime)
+# 莫大置顶
 m_tg_top = ''
-
-def monitor_bili_moda():
+def monitor_bili_moda_top():
     global m_tg_top
     global noLogin
     global headers_bili
+    global bili_moda_mid
     if noLogin:
         return
-    url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?offset=&host_mid=525121722&timezone_offset=-480&features=itemOpusStyle'
+    url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={bili_moda_mid}'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
       return
     list = res['data']['items']
-    bool = False
     jump_id = ''
-    jump_url = ''
-    readOnly= False
+    link=''
     for i in range(len(list)):
         if 'module_tag' in list[i]['modules']:
           m_module_tag = list[i]['modules']['module_tag']
           if(m_module_tag['text']=='置顶'):
-            basic = list[i]['basic']
-            if 'is_only_fans' in basic:
-              readOnly = basic['is_only_fans']
-            if readOnly:
-              bool = True
-              jump_url = basic['jump_url']
-              jump_id = jump_url.split('/opus/')[1]
-            break
-    if bool:
+            id_str = list[i]['id_str']
+            jump_id = id_str
+            link = bili_moda_opus_link + jump_id
+    if bool(jump_id):
         url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type=17'
         res = requests.get(url,headers=headers_bili).json()
         if 'data' not in res:
@@ -104,28 +103,28 @@ def monitor_bili_moda():
           return
         reply = data['top_replies'][0]
         top_id = reply['rpid_str']
-        name = reply['member']['uname']
         msg = reply['content']['message']
         rcount = reply['rcount']
         rpid = reply['rpid_str']
+        ctime = reply['ctime']
         if msg and isinstance(msg,str):
             msg = msg.replace('\n',' ')[0:push_text_len]
         else:
           return
-        # logging.info('最新置顶评论')
         if m_tg_top == '':
             m_tg_top = top_id
         elif top_id != m_tg_top:
             top_msg = msg
-            push('莫大最新置顶评论 '+name,top_msg,'https:'+jump_url)
+            push('置顶: ',top_msg, link)
+            push_dynamic(2,top_msg,link,ctime)
             m_tg_top = top_id
-        monitor_bili_moda_reply({'oid':jump_id,'link':jump_url,'root':rpid,'rcount':rcount})
+        monitor_bili_moda_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount})
     else:
-        push('bili cookie 失效','请重新登录')    
+        push('bili cookie失效','请重新登录')    
         noLogin = True
 
 m_tg_test = ''
-def monitor_bili_test():
+def monitor_bili_follow():
     global m_tg_test
     global noLogin
     global headers_bili
@@ -162,26 +161,29 @@ def monitor_bili_test():
       text = text.replace('\n',' ')[0:push_text_len]
     else:
         return
-    logging('关注最新动态')
+    # logging('关注最新动态')
     if(m_tg_test == ''):
         m_tg_test = id
     elif(m_tg_test != id):
         if jump_url:
-           push('关注最新动态 '+name, text,'https:'+jump_url)
+           push('关注: '+name, text,'https:'+jump_url)
         else:
-           push('关注最新动态 '+name, text)
+           push('关注: '+name, text)
         m_tg_test = id
+
+# 直播
 m_live_status = False
 m_live_flag = False
 def monitor_bili_moda_live():
     global m_live_flag
     global m_live_status
     global live_start_time
-    url = 'https://api.bilibili.com/x/space/wbi/acc/info?mid='+str(bili_moda_mid)
+    global bili_moda_mid
+    url = f'https://api.bilibili.com/x/space/wbi/acc/info?mid={bili_moda_mid}'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
         if not m_live_status:
-            push('直播动态','莫大链接rid失效')
+            push('直播: ','莫大直播链接rid失效')
             m_live_status = True
         return
     else:
@@ -190,18 +192,18 @@ def monitor_bili_moda_live():
     live = res['data']['live_room']
     if live:
         live_status = live['liveStatus']
-        live_room_status = live['roomStatus']
         live_title = live['title']
         live_url = live['url']
-        # logging.info('直播动态')
         if(not m_live_flag and live_status == 1):
             live_start_time = datetime.now()
             m_live_flag = True
-            push('直播动态','莫大开播了--'+live_title,live_url)
+            push('直播: ','莫大直播开始啦--'+live_title,live_url)
         if(live_status == 0 and m_live_flag):
             live_minute = get_live_time(live_start_time) 
             m_live_flag = False
-            push('直播动态','莫大直播结束了--'+live_title+f'(直播时长: {str(live_minute)}分钟)')
+            push('直播: ','莫大直播结束了--'+live_title+f'(直播时长: {str(live_minute)}分钟)')
+
+# 回复
 start_reply={'rpid':-1,'mid':-1}
 end_reply={'rpid':-1,'mid':-1}
 def monitor_bili_moda_reply(options):
@@ -233,7 +235,6 @@ def monitor_bili_moda_reply(options):
       msg = reply['content']['message']
       rpid_int = int(rpid)
       if pageIndex == pageTotal and i == le:
-        # logging.info('评论数量: ' + str(options['rcount']))
         if end_reply_rpid < rpid_int:
           ctime = reply['ctime']
           end_reply = {'ctime':ctime,'mid':mid,'rpid':rpid}
@@ -247,10 +248,11 @@ def monitor_bili_moda_reply(options):
         text = msg
         if text and isinstance(text,str):
           text = text.replace('\n',' ')[0:push_text_len]
-        push('莫大最新回复 ',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
+        push('回复: ',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
 
     if(break_flag):
       break
+
 # 计算时间差(分钟)
 def get_live_time(start_time):
     current_time = datetime.now()
@@ -258,18 +260,20 @@ def get_live_time(start_time):
     minute = time_diff.seconds // 60 + 1
     return minute
 
-
+# 直播
 def monitor_bili_moda_live_roomId():
     global m_live_flag
     global m_live_status
     global live_start_time
-    url='https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo?room_id=23229268'
+    global bili_live_room_id
+    url= f'https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo?room_id={bili_live_room_id}'
+    live_url = f'https://live.bilibili.com/{bili_live_room_id}?broadcast_type=0&is_room_feed=1'
     headers = copy.deepcopy(headers_bili)
     headers['Host'] = "api.live.bilibili.com"
     res = requests.get(url,headers=headers).json()
     if 'data' not in res:
         if not m_live_status:
-            push('直播动态','莫大链接rid失效')
+            push('直播: ','莫大链接rid失效')
             m_live_status = True
         return
     else:
@@ -279,12 +283,15 @@ def monitor_bili_moda_live_roomId():
     if live:
         live_status = live['live_status']
         live_time = live['live_time']
-        # logging.info('直播动态')
         if(not m_live_flag and live_status == 1):
             live_start_time = datetime.now()
             m_live_flag = True
-            push('直播动态','莫大开播了')
+            text = '莫大直播开始啦'
+            push('直播: ',text,live_url)
+            push_dynamic(3,text,live_url)
         if(live_status == 0 and m_live_flag):
             live_minute = get_live_time(live_start_time) 
             m_live_flag = False
-            push('直播动态','莫大直播结束了'f'(直播时长: {str(live_minute)}分钟)')
+            text = f'莫大直播结束了(时长: {str(live_minute)}分钟)'
+            push('直播: ',text,live_url)
+            push_dynamic(3,text,live_url)

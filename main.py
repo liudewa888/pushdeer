@@ -4,7 +4,7 @@ import random
 import configparser
 import logging
 from script.push import send_key,push
-from bili.index import headers_bili,monitor_bili,monitor_bili_moda,monitor_bili_test,monitor_bili_moda_live,monitor_bili_moda_live_roomId
+from bili.index import headers_bili,monitor_bili_moda_dynamic,monitor_bili_moda_top,monitor_bili_moda_live_roomId
 # 读取配置文件
 def readConfig():
     config = configparser.ConfigParser()
@@ -25,10 +25,8 @@ def main():
     global ii
     while(True):
       logging.info("当前轮次: " + str(ii))
-      monitor_bili()
-      monitor_bili_moda()
-      # monitor_bili_test()
-      # monitor_bili_moda_live()
+      monitor_bili_moda_dynamic()
+      monitor_bili_moda_top()
       monitor_bili_moda_live_roomId()
       ii = ii + 1
       s = random.randint(30,80)
