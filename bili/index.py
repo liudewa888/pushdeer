@@ -69,7 +69,6 @@ def monitor_bili_moda_dynamic():
         push('动态: ',text,jump_url)
         push_dynamic(1,text,jump_url,ctime)
         m_tg = id
-    push_dynamic(1,text,jump_url,ctime)
 # 莫大置顶
 m_tg_top = ''
 def monitor_bili_moda_top():
