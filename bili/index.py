@@ -66,7 +66,7 @@ def monitor_bili_moda_dynamic():
     if(m_tg == ''):
         m_tg = id
     elif(m_tg != id):
-        push('动态: ',text,jump_url)
+        push('动态',text,jump_url)
         push_dynamic(1,text,jump_url,ctime)
         m_tg = id
 # 莫大置顶
@@ -114,12 +114,12 @@ def monitor_bili_moda_top():
             m_tg_top = top_id
         elif top_id != m_tg_top:
             top_msg = msg
-            push('置顶: ',top_msg, link)
+            push('置顶',top_msg, link)
             push_dynamic(2,top_msg,link,ctime)
             m_tg_top = top_id
         monitor_bili_moda_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount})
     else:
-        push('bili cookie失效','请重新登录')    
+        push('异常','bili cookie失效,请重新登录')    
         noLogin = True
 
 m_tg_test = ''
@@ -165,9 +165,9 @@ def monitor_bili_follow():
         m_tg_test = id
     elif(m_tg_test != id):
         if jump_url:
-           push('关注: '+name, text,'https:'+jump_url)
+           push('关注', text,'https:'+jump_url)
         else:
-           push('关注: '+name, text)
+           push('关注', text)
         m_tg_test = id
 
 # 直播
@@ -182,7 +182,7 @@ def monitor_bili_moda_live():
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
         if not m_live_status:
-            push('直播: ','莫大直播链接rid失效')
+            push('异常','莫大直播链接rid失效')
             m_live_status = True
         return
     else:
@@ -196,11 +196,11 @@ def monitor_bili_moda_live():
         if(not m_live_flag and live_status == 1):
             live_start_time = datetime.now()
             m_live_flag = True
-            push('直播: ','莫大直播开始啦--'+live_title,live_url)
+            push('直播','莫大直播开始啦--'+live_title,live_url)
         if(live_status == 0 and m_live_flag):
             live_minute = get_live_time(live_start_time) 
             m_live_flag = False
-            push('直播: ','莫大直播结束了--'+live_title+f'(直播时长: {str(live_minute)}分钟)')
+            push('直播','莫大直播结束了--'+live_title+f'(直播时长: {str(live_minute)}分钟)')
 
 # 回复
 start_reply={'rpid':-1,'mid':-1}
@@ -247,7 +247,7 @@ def monitor_bili_moda_reply(options):
         text = msg
         if text and isinstance(text,str):
           text = text.replace('\n',' ')[0:push_text_len]
-        push('回复: ',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
+        push('回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
 
     if(break_flag):
       break
@@ -272,7 +272,7 @@ def monitor_bili_moda_live_roomId():
     res = requests.get(url,headers=headers).json()
     if 'data' not in res:
         if not m_live_status:
-            push('直播: ','莫大链接rid失效')
+            push('异常','莫大链接rid失效')
             m_live_status = True
         return
     else:
@@ -286,11 +286,11 @@ def monitor_bili_moda_live_roomId():
             live_start_time = datetime.now()
             m_live_flag = True
             text = '莫大直播开始啦'
-            push('直播: ',text,live_url)
+            push('直播',text,live_url)
             push_dynamic(3,text,live_url)
         if(live_status == 0 and m_live_flag):
             live_minute = get_live_time(live_start_time) 
             m_live_flag = False
             text = f'莫大直播结束了(时长: {str(live_minute)}分钟)'
-            push('直播: ',text,live_url)
+            push('直播',text,live_url)
             push_dynamic(3,text,live_url)

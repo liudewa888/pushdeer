@@ -24,11 +24,11 @@ ii = 0
 def main():
     global ii
     while(True):
+      ii = ii + 1
       logging.info("当前轮次: " + str(ii))
       monitor_bili_moda_dynamic()
       monitor_bili_moda_top()
       monitor_bili_moda_live_roomId()
-      ii = ii + 1
       s = random.randint(30,80)
       time.sleep(s * 2)
 if __name__ == '__main__':
@@ -39,4 +39,4 @@ if __name__ == '__main__':
     except Exception as e:
       Wlog('')
       print('程序异常退出',e)
-      # push('程序异常退出','请登录远程查看日志')
+      # push('异常','程序异常退出,请登录远程查看日志')
