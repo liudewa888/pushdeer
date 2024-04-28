@@ -4,8 +4,8 @@ from datetime import datetime
 import copy  
 from script.push import push,push_dynamic
 push_text_len = 50
-bili_moda_mid = '525121722'
-bili_live_room_id = '23229268'
+bili_moda_mid = '5251217' # up主id
+bili_live_room_id = '232292' # 直播间id
 bili_moda_opus_link = 'https://www.bilibili.com/opus/'
 live_start_time = None
 noLogin = False
@@ -15,7 +15,7 @@ headers_bili={
     'Cookie': '',
     'Host': 'api.bilibili.com',
     'Origin': 'https://space.bilibili.com',
-    'Referer': 'https://space.bilibili.com/525121722/dynamic',
+    'Referer': 'https://space.bilibili.com/'+ bili_moda_mid + '/dynamic',
     'sec-ch-ua': '"Microsoft Edge";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
@@ -240,7 +240,7 @@ def monitor_bili_moda_reply(options):
       if rpid_int <= end_reply_rpid or end_reply_rpid == -1:
         break_flag = True
         break
-      if mid == bili_moda_mid and start_reply_rpid < rpid_int:
+      if str(mid) == bili_moda_mid and start_reply_rpid < rpid_int:
         ctime = reply['ctime']
         if current_start_reply_rpid < rpid_int:
           start_reply = {'ctime':ctime,'mid':mid,'rpid':rpid}
