@@ -17,12 +17,11 @@
 - [ ] 动态回复
 
 #### 效果图
-- ![图3](./public/pushdeer3.jpg)
-- ![图2](./public/pushdeer2.jpg)
-- ![图1](./public/pushdeer1.jpg)
+- ![图1](./public/pushdeer.jpg)
+
 ### 其它 app
 
-- [] 进行收集
+- [ ] 进行收集
 
 ## 问题
 
