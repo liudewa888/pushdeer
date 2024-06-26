@@ -37,6 +37,7 @@ def monitor_bili_moda_dynamic():
     url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={bili_moda_mid}'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
+      logging.info('莫大动态：返回json不包含data字段---40行')
       return
     list = res['data']['items'][0]
     if 'module_tag' in list['modules']:
@@ -63,7 +64,7 @@ def monitor_bili_moda_dynamic():
     if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:push_text_len]
     else:
-      logging.info('莫大动态：text类型错误')
+      logging.info('莫大动态：text类型错误---66行')
       return
     if(m_tg == ''):
         m_tg = id
@@ -114,6 +115,7 @@ def monitor_bili_moda_top():
         if msg and isinstance(msg,str):
             msg = msg.replace('\n',' ')[0:push_text_len]
         else:
+          # logging.info('置顶：没包含msg字段 ---117行')
           return
         if m_tg_top == '':
             m_tg_top = top_id
@@ -225,8 +227,8 @@ def monitor_bili_moda_reply(options):
     url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type=17&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
+      logging.info('回复：返回json没包含data字段 ---230行')
       return
-    # logging.info('回复：'+ str('数量 ' +options["rcount"]+'---229行'))
     data = res['data']
     replies = data['replies']
     root = data['root']

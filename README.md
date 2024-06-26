@@ -26,3 +26,5 @@
 ## 问题
 
 - 在 issus 留言
+### 已知问题
+1. bilibili cookie 必须用 js的 decodeURIComponent解码一下才行
