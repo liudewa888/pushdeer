@@ -2,10 +2,11 @@ import requests
 import time
 from datetime import datetime
 import copy  
+import logging
 from script.push import push,push_dynamic
 push_text_len = 50
-bili_moda_mid = '5251217' # up主id
-bili_live_room_id = '232292' # 直播间id
+bili_moda_mid = '525121722'
+bili_live_room_id = '23229268'
 bili_moda_opus_link = 'https://www.bilibili.com/opus/'
 live_start_time = None
 noLogin = False
@@ -15,7 +16,7 @@ headers_bili={
     'Cookie': '',
     'Host': 'api.bilibili.com',
     'Origin': 'https://space.bilibili.com',
-    'Referer': 'https://space.bilibili.com/'+ bili_moda_mid + '/dynamic',
+    'Referer': 'https://space.bilibili.com/525121722/dynamic',
     'sec-ch-ua': '"Microsoft Edge";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
@@ -62,6 +63,7 @@ def monitor_bili_moda_dynamic():
     if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:push_text_len]
     else:
+      logging.info('莫大动态：text类型错误')
       return
     if(m_tg == ''):
         m_tg = id
@@ -81,6 +83,7 @@ def monitor_bili_moda_top():
     url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={bili_moda_mid}'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
+      logging.info('置顶：返回json没包含data字段 ---86行')
       return
     list = res['data']['items']
     jump_id = ''
@@ -99,6 +102,8 @@ def monitor_bili_moda_top():
           return
         data = res['data']
         if 'top_replies' not in data:
+          return
+        if len(data['top_replies']) < 1:
           return
         reply = data['top_replies'][0]
         top_id = reply['rpid_str']
@@ -119,7 +124,8 @@ def monitor_bili_moda_top():
             m_tg_top = top_id
         monitor_bili_moda_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount})
     else:
-        push('异常','bili cookie失效,请重新登录')    
+        push('异常','bili cookie失效,请重新登录')
+        logging.info('bili cookie失效,请重新登录')
         noLogin = True
 
 m_tg_test = ''
@@ -160,7 +166,7 @@ def monitor_bili_follow():
       text = text.replace('\n',' ')[0:push_text_len]
     else:
         return
-    # logging('关注最新动态')
+    # logging.info('关注最新动态')
     if(m_tg_test == ''):
         m_tg_test = id
     elif(m_tg_test != id):
@@ -183,6 +189,7 @@ def monitor_bili_moda_live():
     if 'data' not in res:
         if not m_live_status:
             push('异常','莫大直播链接rid失效')
+            logging.info('莫大直播链接rid失效')
             m_live_status = True
         return
     else:
@@ -219,6 +226,7 @@ def monitor_bili_moda_reply(options):
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
       return
+    # logging.info('回复：'+ str('数量 ' +options["rcount"]+'---229行'))
     data = res['data']
     replies = data['replies']
     root = data['root']
@@ -273,6 +281,7 @@ def monitor_bili_moda_live_roomId():
     if 'data' not in res:
         if not m_live_status:
             push('异常','莫大链接rid失效')
+            logging.info('莫大直播链接rid失效')
             m_live_status = True
         return
     else:

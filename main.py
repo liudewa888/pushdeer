@@ -3,7 +3,7 @@ import time
 import random
 import configparser
 import logging
-from script.push import send_key,push
+from script.push import send_key,push,push_dynamic
 from bili.index import headers_bili,monitor_bili_moda_dynamic,monitor_bili_moda_top,monitor_bili_moda_live_roomId
 # 读取配置文件
 def readConfig():
@@ -20,12 +20,19 @@ logging.basicConfig(filename='running.log',format='\n%(asctime)s - %(levelname)s
 def Wlog(text):
  logging.error(text,exc_info=True)
 
+def test():
+  if(ii==2):
+    text = '测试...,test...'
+    push('测试',text)
+    push_dynamic(1,text)
+    logging.info(text)
 ii = 0
 def main():
     global ii
     while(True):
       ii = ii + 1
       logging.info("当前轮次: " + str(ii))
+      # test()
       monitor_bili_moda_dynamic()
       monitor_bili_moda_top()
       monitor_bili_moda_live_roomId()
