@@ -87,15 +87,20 @@ def monitor_bili_moda_top():
       logging.info('置顶：返回json没包含data字段 ---86行')
       return
     list = res['data']['items']
+    if(len(list)==0):
+      logging.info('置顶：list长度为0')
+      return
     jump_id = ''
     link=''
     for i in range(len(list)):
+        print(list[i]['id_str'])
         if 'module_tag' in list[i]['modules']:
           m_module_tag = list[i]['modules']['module_tag']
           if(m_module_tag['text']=='置顶'):
             id_str = list[i]['id_str']
             jump_id = id_str
             link = bili_moda_opus_link + jump_id
+            break
     if bool(jump_id):
         url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type=17'
         res = requests.get(url,headers=headers_bili).json()
@@ -126,7 +131,7 @@ def monitor_bili_moda_top():
             m_tg_top = top_id
         monitor_bili_moda_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount})
     else:
-        push('异常','bili cookie失效,请重新登录')
+        # push('异常','bili cookie失效,请重新登录')
         logging.info('bili cookie失效,请重新登录')
         noLogin = True
 
