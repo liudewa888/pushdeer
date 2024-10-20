@@ -10,6 +10,8 @@ def push(type,text,link=None,desc=None):
   if link:
     desp = desp + f'#### [直达链接]({link})'
   for i in range(len(tokens)):
+    if type[:2] == "笨笨" and 'HBoNnR03Rtoko' in tokens[i]:
+      continue
     data ={
       'pushkey': tokens[i],
       'text': type + ': ' +text,
