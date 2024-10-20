@@ -317,26 +317,25 @@ def monitor_bili_moda_live_roomId(UP):
     headers['Host'] = "api.live.bilibili.com"
     res = requests.get(url,headers=headers).json()
     if 'data' not in res:
-        if not m_live_status:
+        if not m_live_s[UP['mid']]:
             push('异常',UP["name"]+'直播链接rid失效')
             logging.info(UP["name"]+'直播链接rid失效')
             m_live_s[UP['mid']] = True
         return
     else:
-        if m_live_status:
+        if m_live_s[UP['mid']]:
             m_live_s[UP['mid']] = False
     live = res['data']
     if live:
         live_status = live['live_status']
-        live_time = live['live_time']
-        if(not m_live_flag and live_status == 1):
+        if(not m_live_f[UP['mid']] and live_status == 1):
             m_live_t[UP['mid']] = datetime.now()
             m_live_f[UP['mid']] = True
             text = '直播开始啦'
             push(UP["name"]+'直播',text,live_url)
             push_dynamic(UP["name"],3,text,live_url)
-        if(live_status == 0 and m_live_flag):
-            live_minute = get_live_time(live_start_time) 
+        if(live_status == 0 and m_live_f[UP['mid']]):
+            live_minute = get_live_time(m_live_t[UP['mid']]) 
             m_live_f[UP['mid']] = False
             text = f'直播结束了(时长: {str(live_minute)}分钟)'
             push(UP["name"]+'直播',text,live_url)
