@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import copy  
 import logging
-from script.push import push,push_dynamic
+from script.push import push,push_dynamic,push_dingding
 push_text_len = 50
 up_list = [    
     {
@@ -84,6 +84,7 @@ def monitor_bili_moda_dynamic(UP):
     elif(m_tg[UP['mid']] != id):
         push(UP["name"]+'动态',text,jump_url)
         push_dynamic(UP["name"],1,text,jump_url,ctime)
+        push_dingding(UP["name"]+'动态',text,jump_url)
         m_tg[UP['mid']] = id
 # UP置顶
 m_tg_top = {}
@@ -141,6 +142,7 @@ def monitor_bili_moda_top(UP):
             top_msg = msg
             push(UP["name"]+'置顶',top_msg, link)
             push_dynamic(UP["name"],2,top_msg,link,ctime)
+            push_dingding(UP["name"]+'置顶',top_msg, link)
             m_tg_top[UP["mid"]] = top_id
         monitor_bili_moda_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount},UP)
     else:
@@ -192,8 +194,10 @@ def monitor_bili_follow():
     elif(m_tg_test != id):
         if jump_url:
            push('关注', text,'https:'+jump_url)
+           push_dingding('关注', text,'https:'+jump_url)
         else:
            push('关注', text)
+           push_dingding('关注', text)
         m_tg_test = id
 
 # 直播(方法废弃)
@@ -283,7 +287,7 @@ def monitor_bili_moda_reply(options,UP):
         if text and isinstance(text,str):
           text = text.replace('\n',' ')[0:push_text_len]
         push(UP["name"]+'回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
-
+        push_dingding(UP["name"]+'回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
     if(break_flag):
       break
 
@@ -315,7 +319,10 @@ def monitor_bili_moda_live_roomId(UP):
     live_url = f'https://live.bilibili.com/{UP["roomId"]}?broadcast_type=0&is_room_feed=1'
     headers = copy.deepcopy(headers_bili)
     headers['Host'] = "api.live.bilibili.com"
-    res = requests.get(url,headers=headers).json()
+    response = requests.get(url,headers=headers)
+    if response.status_code != 200:
+      return
+    res = response.json()
     if 'data' not in res:
         if not m_live_s[UP['mid']]:
             push('异常',UP["name"]+'直播链接rid失效')
@@ -334,12 +341,14 @@ def monitor_bili_moda_live_roomId(UP):
             text = '直播开始啦'
             push(UP["name"]+'直播',text,live_url)
             push_dynamic(UP["name"],3,text,live_url)
+            push_dingding(UP["name"]+'直播',text,live_url)
         if(live_status == 0 and m_live_f[UP['mid']]):
             live_minute = get_live_time(m_live_t[UP['mid']]) 
             m_live_f[UP['mid']] = False
             text = f'直播结束了(时长: {str(live_minute)}分钟)'
             push(UP["name"]+'直播',text,live_url)
             push_dynamic(UP["name"],3,text,live_url)
+            push_dingding(UP["name"]+'直播',text,live_url)
             
 def bili_main():
   global up_list
