@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import copy  
 import logging
-from script.push import push,push_dynamic,push_dingding
+from script.push import push,push_dynamic,push_dingding,push_error
 push_text_len = 50
 up_list = [    
     {
@@ -146,7 +146,7 @@ def monitor_bili_moda_top(UP):
             m_tg_top[UP["mid"]] = top_id
         monitor_bili_moda_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount},UP)
     else:
-        push('异常','bili cookie失效,请重新登录')
+        push_error('异常','bili cookie失效,请重新登录')
         logging.info('bili cookie失效,请重新登录')
         noLogin = True
 
@@ -211,7 +211,7 @@ def monitor_bili_moda_live(UP):
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
         if not m_live_status:
-            push('异常','莫大直播链接rid失效')
+            push_error('异常','莫大直播链接rid失效')
             logging.info('莫大直播链接rid失效')
             m_live_status = True
         return
@@ -325,7 +325,7 @@ def monitor_bili_moda_live_roomId(UP):
     res = response.json()
     if 'data' not in res:
         if not m_live_s[UP['mid']]:
-            push('异常',UP["name"]+'直播链接rid失效')
+            push_error('异常',UP["name"]+'直播链接rid失效')
             logging.info(UP["name"]+'直播链接rid失效')
             m_live_s[UP['mid']] = True
         return

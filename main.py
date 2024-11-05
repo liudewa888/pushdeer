@@ -3,7 +3,7 @@ import time
 import random
 import configparser
 import logging
-from script.push import send_key,push,push_dynamic,push_dingding,ding_key
+from script.push import send_key,push,push_dynamic,push_dingding,ding_key,error_key,push_error
 from bili.index import headers_bili,bili_main
 # 读取配置文件
 def readConfig():
@@ -13,6 +13,7 @@ def readConfig():
       send_key['token'] = config['data']['send_key']
       headers_bili['Cookie'] = config['data']['cookie_bili']
       ding_key['token'] = config['data']['ding_key']
+      error_key['token'] = config['data']['error_key']
     else:
       logging.error('配置文件未找到或格式错误')
       sys.exit(0)
@@ -24,7 +25,6 @@ def Wlog(text):
 def test():
   if(ii==2):
     text = '测试...,test...'
-    # push('莫大动态测试',text)
     # push('笨笨动态测试',text)
     # push_dynamic('莫大',4,text)
     # push_dingding('莫大置顶','测试怎么说哈哈哈侃侃保证啥只会哈哈','http://baidu.com')
@@ -47,4 +47,4 @@ if __name__ == '__main__':
     except Exception as e:
       Wlog('')
       print('程序异常退出',e)
-      # push('异常','程序异常退出,请登录远程查看日志')
+      # push_error('异常','程序异常退出,请登录远程查看日志')

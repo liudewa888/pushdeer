@@ -3,6 +3,7 @@ import requests
 import json
 send_key = {}
 ding_key= {}
+error_key = {}
 def push(type,text,link=None,desc=None):
   tokens = send_key["token"].split(',')
   url = 'https://api2.pushdeer.com/message/push'
@@ -21,6 +22,20 @@ def push(type,text,link=None,desc=None):
     }
     requests.post(url,data)
 
+def push_error(type,text,link=None,desc=None):
+  token = error_key["token"]
+  url = 'https://api2.pushdeer.com/message/push'
+  desp = ''
+  if desc:
+    desp = desp +"#### 帖子: " + desc + " \n "
+  if link:
+    desp = desp + f'#### [直达链接]({link})'
+  data ={
+    'pushkey': token,
+    'text': type + ': ' +text,
+    'desp': desp
+  }
+  requests.post(url,data)
 
 def push_dynamic(name,type,content,link=None,ctime=None):
   url="http://127.0.0.1/moda/dynamic/add"
