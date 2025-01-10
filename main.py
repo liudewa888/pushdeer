@@ -23,11 +23,12 @@ def Wlog(text):
  logging.error(text,exc_info=True)
 
 def test():
-  if(ii==2):
+  if(ii==1):
     text = '测试...,test...'
     # push('笨笨动态测试',text)
     # push_dynamic('莫大',4,text)
     # push_dingding('莫大置顶','测试怎么说哈哈哈侃侃保证啥只会哈哈','http://baidu.com')
+    # push_error('异常','程序异常退出,请登录远程查看日志')
     logging.info(text)
 ii = 0
 def main():
@@ -35,8 +36,8 @@ def main():
     while(True):
       ii = ii + 1
       logging.info("当前轮次: " + str(ii))
-      # test()
-      bili_main()
+      test()
+      # bili_main()
       s = random.randint(30,80)
       time.sleep(s * 2)
 if __name__ == '__main__':
