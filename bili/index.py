@@ -2,9 +2,8 @@ import requests
 import time
 from datetime import datetime
 import copy  
-import logging
 from script.push import push,push_dynamic,push_dingding,push_error
-push_text_len = 50
+push_text_len = 32
 up_list = [    
     {
         'name': '莫大',
@@ -17,11 +16,13 @@ up_list = [
         'roomId': '27805029'
     }
 ]
-bili_moda_mid = '525121722'
-bili_live_room_id = '23229268'
+
+
 bili_moda_opus_link = 'https://www.bilibili.com/opus/'
 live_start_time = None
 noLogin = False
+log = {}
+Wlog_info = None
 headers_bili={
     'Accept': 'application/json, text/plain, */*',
     'Connection': 'keep-alive',
@@ -39,7 +40,7 @@ headers_bili={
 }
 # UP动态
 m_tg = {}
-def monitor_bili_moda_dynamic(UP):
+def monitor_bili_dynamic(UP):
     global m_tg
     global noLogin
     global headers_bili
@@ -50,7 +51,7 @@ def monitor_bili_moda_dynamic(UP):
     url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
-      logging.info(UP['name'] +'动态：返回json不包含data字段---40行')
+      Wlog_info(UP['name'] +'动态：返回json不包含data字段---40行')
       return
     list = res['data']['items'][0]
     if 'module_tag' in list['modules']:
@@ -77,7 +78,7 @@ def monitor_bili_moda_dynamic(UP):
     if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:push_text_len]
     else:
-      logging.info(UP['name'] +'动态：text类型错误---66行')
+      Wlog_info(UP['name'] +'动态：text类型错误---66行')
       return
     if(m_tg[UP['mid']] == ''):
         m_tg[UP['mid']] = id
@@ -88,7 +89,7 @@ def monitor_bili_moda_dynamic(UP):
         m_tg[UP['mid']] = id
 # UP置顶
 m_tg_top = {}
-def monitor_bili_moda_top(UP):
+def monitor_bili_top(UP):
     global m_tg_top
     global noLogin
     global headers_bili
@@ -99,11 +100,11 @@ def monitor_bili_moda_top(UP):
     url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
-      logging.info(UP["name"]+'置顶：返回json没包含data字段 ---86行')
+      Wlog_info(UP["name"]+'置顶：返回json没包含data字段 ---86行')
       return
     list = res['data']['items']
     if(len(list)==0):
-      logging.info(UP["name"]+'置顶：list长度为0')
+      Wlog_info(UP["name"]+'置顶：list长度为0')
       return
     jump_id = ''
     link=''
@@ -134,20 +135,20 @@ def monitor_bili_moda_top(UP):
         if msg and isinstance(msg,str):
             msg = msg.replace('\n',' ')[0:push_text_len]
         else:
-          # logging.info(UP["name"]+'置顶：没包含msg字段 ---117行')
+          # Wlog_info(UP["name"]+'置顶：没包含msg字段 ---117行')
           return
         if m_tg_top[UP["mid"]] == '':
             m_tg_top[UP["mid"]] = top_id
         elif top_id != m_tg_top[UP["mid"]]:
             top_msg = msg
-            push(UP["name"]+'置顶',top_msg, link)
+            push(UP["name"]+'置顶评论',top_msg, link)
             push_dynamic(UP["name"],2,top_msg,link,ctime)
-            push_dingding(UP["name"]+'置顶',top_msg, link)
+            push_dingding(UP["name"]+'置顶评论',top_msg, link)
             m_tg_top[UP["mid"]] = top_id
-        monitor_bili_moda_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount},UP)
+        monitor_bili_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount},UP)
     else:
         push_error('异常','bili cookie失效,请重新登录')
-        logging.info('bili cookie失效,请重新登录')
+        Wlog_info('bili cookie失效,请重新登录')
         noLogin = True
 
 m_tg_test = ''
@@ -188,7 +189,7 @@ def monitor_bili_follow():
       text = text.replace('\n',' ')[0:push_text_len]
     else:
         return
-    # logging.info('关注最新动态')
+    # Wlog_info('关注最新动态')
     if(m_tg_test == ''):
         m_tg_test = id
     elif(m_tg_test != id):
@@ -203,7 +204,7 @@ def monitor_bili_follow():
 # 直播(方法废弃)
 m_live_status = False
 m_live_flag = False
-def monitor_bili_moda_live(UP):
+def monitor_bili_live(UP):
     global m_live_flag
     global m_live_status
     global live_start_time
@@ -212,7 +213,7 @@ def monitor_bili_moda_live(UP):
     if 'data' not in res:
         if not m_live_status:
             push_error('异常','莫大直播链接rid失效')
-            logging.info('莫大直播链接rid失效')
+            Wlog_info('莫大直播链接rid失效')
             m_live_status = True
         return
     else:
@@ -235,7 +236,7 @@ def monitor_bili_moda_live(UP):
 # UP置顶回复
 start_reply={}
 end_reply={}
-def monitor_bili_moda_reply(options,UP):
+def monitor_bili_reply(options,UP):
   global start_reply
   global end_reply
   
@@ -256,7 +257,7 @@ def monitor_bili_moda_reply(options,UP):
     url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type=17&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
-      logging.info('回复：返回json没包含data字段 ---230行')
+      Wlog_info('回复：返回json没包含data字段 ---230行')
       return
     data = res['data']
     replies = data['replies']
@@ -286,8 +287,8 @@ def monitor_bili_moda_reply(options,UP):
         text = msg
         if text and isinstance(text,str):
           text = text.replace('\n',' ')[0:push_text_len]
-        push(UP["name"]+'回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
-        push_dingding(UP["name"]+'回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
+        push(UP["name"]+'置顶评论回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
+        push_dingding(UP["name"]+'置顶评论回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
     if(break_flag):
       break
 
@@ -302,7 +303,7 @@ def get_live_time(start_time):
 m_live_f = {}
 m_live_s = {}
 m_live_t = {}
-def monitor_bili_moda_live_roomId(UP):
+def monitor_bili_live_roomId(UP):
     global m_live_f
     global m_live_s
     global m_live_t
@@ -326,7 +327,7 @@ def monitor_bili_moda_live_roomId(UP):
     if 'data' not in res:
         if not m_live_s[UP['mid']]:
             push_error('异常',UP["name"]+'直播链接rid失效')
-            logging.info(UP["name"]+'直播链接rid失效')
+            Wlog_info(UP["name"]+'直播链接rid失效')
             m_live_s[UP['mid']] = True
         return
     else:
@@ -351,10 +352,12 @@ def monitor_bili_moda_live_roomId(UP):
             push_dingding(UP["name"]+'直播',text,live_url)
             
 def bili_main():
+  global Wlog_info
   global up_list
+  Wlog_info = log['Wlog_info']
   for i in range(len(up_list)):
     UP = up_list[i]
-    monitor_bili_moda_dynamic(UP)
-    monitor_bili_moda_top(UP)
-    monitor_bili_moda_live_roomId(UP)
+    monitor_bili_dynamic(UP)
+    monitor_bili_top(UP)
+    monitor_bili_live_roomId(UP)
     time.sleep(6 * 2)

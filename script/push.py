@@ -4,6 +4,7 @@ import json
 send_key = {}
 ding_key= {}
 error_key = {}
+ad = {}
 def push(type,text,link=None,desc=None):
   tokens = send_key["token"].split(',')
   url = 'https://api2.pushdeer.com/message/push'
@@ -38,9 +39,9 @@ def push_error(type,text,link=None,desc=None):
   requests.post(url,data)
 
 def push_dynamic(name,type,content,link=None,ctime=None):
-  url="http://127.0.0.1/moda/dynamic/add"
+  # url="http://127.0.0.1/moda/dynamic/add"
   # url="http://127.0.0.1:9080/moda/dynamic/add"
-  # url="http://www.yztpsg.cn/moda/dynamic/add"
+  url="http://liudewa.cc/moda/dynamic/add"
   if content and isinstance(content,str):
     content = content[0:20]
   data = {
@@ -52,16 +53,32 @@ def push_dynamic(name,type,content,link=None,ctime=None):
   }
   requests.post(url,data)
 
-def push_dingding(type,content,link=None,ctime=None):
+def push_dingding(type,content,link=None,desc=None):
   headers = {'Content-Type':'application/json'}
-  url="https://oapi.dingtalk.com/robot/send?access_token=" + ding_key['token']
   if content and isinstance(content,str):
-    content = content[0:20]
-    data= {
+    text1 = content[0:20]
+
+  text = f'#### { type} \n\n {content}'
+  if link:
+    text = f'#### { type} \n\n {content} \n\n [直达链接]({link})'
+  
+  if desc:
+     text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc}'
+
+  if ad['ad_info']:
+     text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc} \n\n {ad["ad_info"]}'
+
+  data= {
         "msgtype":"markdown",
         "markdown":{
-            "title": '通知 '  + type + ' '  + content,
-            "text": f'#### { type} \n\n {content} \n\n [直达链接]({link})'
+            "title": '通知 '  + type + ' '  + text1,
+            "text": text
         }
     }
-  requests.post(url,json.dumps(data),headers=headers)
+  
+  tokens = ding_key["token"].split(',')
+  for i in range(len(tokens)):
+    url="https://oapi.dingtalk.com/robot/send?access_token=" + tokens[i]
+    requests.post(url,json.dumps(data),headers=headers)
+
+
