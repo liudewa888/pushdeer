@@ -39,9 +39,9 @@ def push_error(type,text,link=None,desc=None):
   requests.post(url,data)
 
 def push_dynamic(name,type,content,link=None,ctime=None):
-  # url="http://127.0.0.1/moda/dynamic/add"
+  url="http://10.0.16.17:8002/dynamic/add"
   # url="http://127.0.0.1:9080/moda/dynamic/add"
-  url="http://liudewa.cc/moda/dynamic/add"
+  # url="http://liudewa.cc/moda/dynamic/add"
   if content and isinstance(content,str):
     content = content[0:20]
   data = {

@@ -320,7 +320,11 @@ def monitor_bili_live_roomId(UP):
     live_url = f'https://live.bilibili.com/{UP["roomId"]}?broadcast_type=0&is_room_feed=1'
     headers = copy.deepcopy(headers_bili)
     headers['Host'] = "api.live.bilibili.com"
-    response = requests.get(url,headers=headers)
+    try:
+      response = requests.get(url,headers=headers)
+    except Exception as e:
+            Wlog_info("直播接口服务器异常323行")
+            return
     if response.status_code != 200:
       return
     res = response.json()
