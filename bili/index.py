@@ -6,11 +6,13 @@ from script.push import push,push_dynamic,push_dingding,push_error
 push_text_len = 32
 up_list = [    
     {
+        'id': '0',
         'name': '莫大',
         'mid': '525121722',
         'roomId': '23229268'
     },
     {
+        'id': '1',
         'name': '笨笨',
         'mid': '11473291',
         'roomId': '27805029'
@@ -89,7 +91,7 @@ def monitor_bili_dynamic(UP):
         m_tg[UP['mid']] = id
     if bool(m_tg[UP['mid']]):
        UP1 = copy.deepcopy(UP)
-       UP1['mid'] = UP1['mid'] + '最新动态' + m_tg[UP['mid']]
+       UP1['id'] = '最新动态'+ UP1['id'] + m_tg[UP['mid']]
        UP1['name'] = UP1['name'] + '最新动态'
        monitor_bili_top(UP1,m_tg[UP['mid']],jump_url)
 # UP置顶
@@ -99,8 +101,8 @@ def monitor_bili_top(UP,jump_id='',link=''):
     global noLogin
     global headers_bili
     
-    if UP['mid'] not in m_tg_top:
-        m_tg_top[UP['mid']] = ''
+    if UP['id'] not in m_tg_top:
+        m_tg_top[UP['id']] = ''
     if noLogin:
           return
     if not bool(jump_id):
@@ -130,8 +132,8 @@ def monitor_bili_top(UP,jump_id='',link=''):
         if 'top_replies' not in data:
           return
         if len(data['top_replies']) < 1:
-          if m_tg_top[UP["mid"]] == '':
-            m_tg_top[UP["mid"]] = '-1'
+          if m_tg_top[UP["id"]] == '':
+            m_tg_top[UP["id"]] = '-1'
           return
         reply = data['top_replies'][0]
         top_id = reply['rpid_str']
@@ -144,16 +146,16 @@ def monitor_bili_top(UP,jump_id='',link=''):
         else:
           # Wlog_info(UP["name"]+'置顶：没包含msg字段 ---117行')
           return
-        if '最新动态' in UP["mid"]:
-           Wlog_info(top_id+'==='+m_tg_top[UP["mid"]]+'==='+UP["mid"]+'---148行')
-        if m_tg_top[UP["mid"]] == '':
-            m_tg_top[UP["mid"]] = top_id
-        elif top_id != m_tg_top[UP["mid"]]:
+        if '最新动态' in UP["id"]:
+           Wlog_info(top_id+'==='+m_tg_top[UP["id"]]+'==='+UP["id"]+'---148行')
+        if m_tg_top[UP["id"]] == '':
+            m_tg_top[UP["id"]] = top_id
+        elif top_id != m_tg_top[UP["id"]]:
             top_msg = msg
             # push(UP["name"]+'置顶评论',top_msg, link)
             push_dynamic(UP["name"],2,top_msg,link,ctime)
             push_dingding(UP["name"]+'最新置顶评论',top_msg, link)
-            m_tg_top[UP["mid"]] = top_id
+            m_tg_top[UP["id"]] = top_id
         monitor_bili_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount},UP)
     else:
         push_error('异常','bili cookie失效,请重新登录')
