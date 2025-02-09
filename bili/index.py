@@ -89,7 +89,7 @@ def monitor_bili_dynamic(UP):
         m_tg[UP['mid']] = id
     if bool(m_tg[UP['mid']]):
        UP1 = copy.deepcopy(UP)
-       UP1['mid'] = UP1['mid'] + '最新动态'
+       UP1['mid'] = UP1['mid'] + '最新动态' + m_tg[UP['mid']]
        UP1['name'] = UP1['name'] + '最新动态'
        monitor_bili_top(UP1,m_tg[UP['mid']],jump_url)
 # UP置顶
@@ -98,11 +98,12 @@ def monitor_bili_top(UP,jump_id='',link=''):
     global m_tg_top
     global noLogin
     global headers_bili
-    if not bool(jump_id):
-      if UP['mid'] not in m_tg_top:
+    
+    if UP['mid'] not in m_tg_top:
         m_tg_top[UP['mid']] = ''
-      if noLogin:
+    if noLogin:
           return
+    if not bool(jump_id):
       url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}'
       res = requests.get(url,headers=headers_bili).json()
       if 'data' not in res:
@@ -129,6 +130,8 @@ def monitor_bili_top(UP,jump_id='',link=''):
         if 'top_replies' not in data:
           return
         if len(data['top_replies']) < 1:
+          if m_tg_top[UP["mid"]] == '':
+            m_tg_top[UP["mid"]] = '-1'
           return
         reply = data['top_replies'][0]
         top_id = reply['rpid_str']
@@ -141,6 +144,8 @@ def monitor_bili_top(UP,jump_id='',link=''):
         else:
           # Wlog_info(UP["name"]+'置顶：没包含msg字段 ---117行')
           return
+        if '最新动态' in UP["mid"]:
+           Wlog_info(top_id+'==='+m_tg_top[UP["mid"]]+'==='+UP["mid"]+'---148行')
         if m_tg_top[UP["mid"]] == '':
             m_tg_top[UP["mid"]] = top_id
         elif top_id != m_tg_top[UP["mid"]]:
