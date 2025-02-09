@@ -60,6 +60,7 @@ def monitor_bili_dynamic(UP):
       m_module_tag = list['modules']['module_tag']
       if(m_module_tag['text']=='置顶'):
           list = res['data']['items'][1]
+    rid_str = list['basic']['rid_str']
     id = list['id_str']
     jump_url = bili_moda_opus_link + id
     text = list['modules']['module_dynamic']['desc']
@@ -89,11 +90,11 @@ def monitor_bili_dynamic(UP):
         push_dynamic(UP["name"],1,text,jump_url,ctime)
         push_dingding(UP["name"]+'最新动态',text,jump_url)
         m_tg[UP['mid']] = id
-    if bool(m_tg[UP['mid']]):
+    if bool(rid_str):
        UP1 = copy.deepcopy(UP)
-       UP1['id'] = '最新动态'+ UP1['id'] + m_tg[UP['mid']]
+       UP1['id'] = '最新动态'+ UP1['id'] + rid_str
        UP1['name'] = UP1['name'] + '最新动态'
-       monitor_bili_top(UP1,m_tg[UP['mid']],jump_url)
+       monitor_bili_top(UP1,rid_str,jump_url)
 # UP置顶
 m_tg_top = {}
 def monitor_bili_top(UP,jump_id='',link=''):
@@ -146,7 +147,7 @@ def monitor_bili_top(UP,jump_id='',link=''):
         else:
           # Wlog_info(UP["name"]+'置顶：没包含msg字段 ---117行')
           return
-        if '最新动态' in UP["id"]:
+        if '最新动态' in UP["name"]:
            Wlog_info(top_id+'==='+m_tg_top[UP["id"]]+'==='+UP["id"]+'---148行')
         if m_tg_top[UP["id"]] == '':
             m_tg_top[UP["id"]] = top_id
