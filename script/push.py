@@ -3,6 +3,7 @@ import requests
 import json
 send_key = {}
 ding_key= {}
+ding_key_benben= {}
 error_key = {}
 ad = {}
 def push(type,text,link=None,desc=None):
@@ -77,6 +78,37 @@ def push_dingding(type,content,link=None,desc=None):
     }
   
   tokens = ding_key["token"].split(',')
+  for i in range(len(tokens)):
+    url="https://oapi.dingtalk.com/robot/send?access_token=" + tokens[i]
+    requests.post(url,json.dumps(data),headers=headers)
+
+def push_dingding_single(UP,type,content,link=None,desc=None):
+  if UP['mid'] != '11473291':
+    return
+  type = UP['name'] + type
+  headers = {'Content-Type':'application/json'}
+  if content and isinstance(content,str):
+    text1 = content[0:20]
+
+  text = f'#### { type} \n\n {content}'
+  if link:
+    text = f'#### { type} \n\n {content} \n\n [直达链接]({link})'
+  
+  if desc:
+     text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc}'
+
+  if ad['ad_info']:
+     text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc} \n\n {ad["ad_info"]}'
+
+  data= {
+        "msgtype":"markdown",
+        "markdown":{
+            "title": '通知 '  + type + ' '  + text1,
+            "text": text
+        }
+    }
+  
+  tokens = ding_key_benben["token"].split(',')
   for i in range(len(tokens)):
     url="https://oapi.dingtalk.com/robot/send?access_token=" + tokens[i]
     requests.post(url,json.dumps(data),headers=headers)

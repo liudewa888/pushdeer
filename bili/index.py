@@ -2,7 +2,7 @@ import requests
 import time
 from datetime import datetime
 import copy  
-from script.push import push,push_dynamic,push_dingding,push_error
+from script.push import push,push_dynamic,push_dingding,push_error,push_dingding_single
 push_text_len = 32
 up_list = [    
     {
@@ -89,6 +89,7 @@ def monitor_bili_dynamic(UP):
         # push(UP["name"]+'动态',text,jump_url)
         push_dynamic(UP["name"],1,text,jump_url,ctime)
         push_dingding(UP["name"]+'最新动态',text,jump_url)
+        push_dingding_single(UP,'最新动态',text,jump_url)
         m_tg[UP['mid']] = id
     if bool(rid_str):
        UP1 = copy.deepcopy(UP)
@@ -156,6 +157,7 @@ def monitor_bili_top(UP,jump_id='',link=''):
             # push(UP["name"]+'置顶评论',top_msg, link)
             push_dynamic(UP["name"],2,top_msg,link,ctime)
             push_dingding(UP["name"]+'最新置顶评论',top_msg, link)
+            push_dingding_single(UP,'最新置顶评论',top_msg,link)
             m_tg_top[UP["id"]] = top_id
         monitor_bili_reply({'oid':jump_id,'link':link,'root':rpid,'rcount':rcount},UP)
     else:
@@ -302,6 +304,7 @@ def monitor_bili_reply(options,UP):
           text = text.replace('\n',' ')[0:push_text_len]
         # push(UP["name"]+'最新置顶评论回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
         push_dingding(UP["name"]+'最新置顶评论回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
+        push_dingding_single(UP,'最新置顶评论回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
     if(break_flag):
       break
 
@@ -360,6 +363,7 @@ def monitor_bili_live_roomId(UP):
             # push(UP["name"]+'直播',text,live_url)
             push_dynamic(UP["name"],3,text,live_url)
             push_dingding(UP["name"]+'直播',text,live_url)
+            push_dingding_single(UP,'直播',text,live_url)
         if(live_status == 0 and m_live_f[UP['mid']]):
             live_minute = get_live_time(m_live_t[UP['mid']]) 
             m_live_f[UP['mid']] = False
@@ -367,6 +371,7 @@ def monitor_bili_live_roomId(UP):
             # push(UP["name"]+'直播',text,live_url)
             push_dynamic(UP["name"],3,text,live_url)
             push_dingding(UP["name"]+'直播',text,live_url)
+            push_dingding_single(UP,'直播',text,live_url)
             
 def bili_main():
   global Wlog_info

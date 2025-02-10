@@ -3,7 +3,7 @@ import time
 import random
 import configparser
 import logging
-from script.push import send_key,push,push_dynamic,push_dingding,ding_key,error_key,push_error,ad
+from script.push import send_key,push,push_dynamic,push_dingding,ding_key,error_key,push_error,ad,ding_key_benben
 from bili.index import headers_bili,bili_main,log
 # 读取配置文件
 def readConfig():
@@ -14,6 +14,7 @@ def readConfig():
       headers_bili['Cookie'] = config['data']['cookie_bili']
       ding_key['token'] = config['data']['ding_key']
       error_key['token'] = config['data']['error_key']
+      ding_key_benben['token'] = config['data']['ding_key_benben']
       ad['ad_info'] = config['data']['ad_info']
     else:
       Wlog_error('配置文件未找到或格式错误')
