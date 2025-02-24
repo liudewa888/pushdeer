@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 import copy  
 from script.push import push,push_dynamic,push_dingding,push_error,push_dingding_single
-push_text_len = 32
+push_text_len = 20
 up_list = [    
     {
         'id': '0',
@@ -61,6 +61,7 @@ def monitor_bili_dynamic(UP):
       if(m_module_tag['text']=='置顶'):
           list = res['data']['items'][1]
     rid_str = list['basic']['rid_str']
+    type = str(list['basic']['comment_type'])
     id = list['id_str']
     jump_url = bili_moda_opus_link + id
     text = list['modules']['module_dynamic']['desc']
@@ -95,10 +96,12 @@ def monitor_bili_dynamic(UP):
        UP1 = copy.deepcopy(UP)
        UP1['id'] = '最新动态'+ UP1['id'] + rid_str
        UP1['name'] = UP1['name'] + '最新动态'
-       monitor_bili_top(UP1,rid_str,jump_url)
+       monitor_bili_top(UP1,rid_str,jump_url,type)
+    else:
+        Wlog_info(UP1['name'] + '===id为空')
 # UP置顶
 m_tg_top = {}
-def monitor_bili_top(UP,jump_id='',link=''):
+def monitor_bili_top(UP,jump_id='',link='',type=''):
     global m_tg_top
     global noLogin
     global headers_bili
@@ -122,13 +125,17 @@ def monitor_bili_top(UP,jump_id='',link=''):
             m_module_tag = list[i]['modules']['module_tag']
             if(m_module_tag['text']=='置顶'):
               id_str = list[i]['id_str']
+              # basic = list[i]['basic']
+              # 默认类型
+              type = '17'
               jump_id = id_str
               link = bili_moda_opus_link + jump_id
               break
     if bool(jump_id):
-        url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type=17'
+        url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type={type}'
         res = requests.get(url,headers=headers_bili).json()
         if 'data' not in res:
+          Wlog_info('data not in res ==='+UP["name"]+'==='+ jump_id + '===' + type )
           return
         data = res['data']
         if 'top_replies' not in data:
@@ -148,8 +155,6 @@ def monitor_bili_top(UP,jump_id='',link=''):
         else:
           # Wlog_info(UP["name"]+'置顶：没包含msg字段 ---117行')
           return
-        if '最新动态' in UP["name"]:
-           Wlog_info(top_id+'==='+m_tg_top[UP["id"]]+'==='+UP["id"]+'---148行')
         if m_tg_top[UP["id"]] == '':
             m_tg_top[UP["id"]] = top_id
         elif top_id != m_tg_top[UP["id"]]:
@@ -275,6 +280,9 @@ def monitor_bili_reply(options,UP):
       Wlog_info('回复：返回json没包含data字段 ---230行')
       return
     data = res['data']
+    if not bool(data) or 'replies' not in data:
+       Wlog_info('replies not in data ---283行')
+       return
     replies = data['replies']
     root = data['root']
     root_msg = root['content']['message']
