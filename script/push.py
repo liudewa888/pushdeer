@@ -70,9 +70,9 @@ def push_dingding(type,content,link=None,desc=None):
 
   if ad['ad_info']:
    if desc:
-      text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc} \n\n ##### {ad["ad_info"]}'
+      text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc} \n\n {ad["ad_info"]}'
    else:
-      text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n ##### {ad["ad_info"]}'
+      text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {ad["ad_info"]}'
 
   data= {
         "msgtype":"markdown",
@@ -104,9 +104,9 @@ def push_dingding_single(UP,type,content,link=None,desc=None):
 
   if ad['ad_info']:
    if desc:
-      text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc} \n\n ##### {ad["ad_info"]}'
+      text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc} \n\n {ad["ad_info"]}'
    else:
-      text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n ##### {ad["ad_info"]}'
+      text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {ad["ad_info"]}'
 
   data= {
         "msgtype":"markdown",

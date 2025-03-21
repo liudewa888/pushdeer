@@ -1,6 +1,7 @@
 import requests
 import time
 import re
+import json
 from script.push import push_dingding_test
 push_text_len = 20
 platform_name='(小红书)'
@@ -38,21 +39,32 @@ def xhs_home(UP):
  html_content = res.text
  if not html_content:
   return
- html_content = html_content.split('window.__INITIAL_STATE__')
-
- match = re.search(r'"displayTitle":"(.*?)"', html_content[1])
-
+ html_content = html_content.split('<script>window.__SSR__=true</script>')
+ match = re.search(r'window.__INITIAL_STATE__=(.*?)</script>', html_content[1],re.DOTALL)
  if match:
-    text = match.group(1)
-    text = text.replace('\n',' ')[0:push_text_len]
+    txt = match.group(1)
+    txt =  re.sub(r':\s*undefined', ': null', txt)
+    data = json.loads(txt)
+    notes = data['user']['notes'][0]
+    text = None
+    for item in notes:
+        card = item['noteCard']
+        text = card['displayTitle']
+        top = None
+        if 'interactInfo' in card:
+            interactInfo = card['interactInfo']
+            top = interactInfo['sticky']
+        if not top:
+            break
     id = text
     link = url
+    # Wlog_info(text+'---小红书')
     if(m_tg_last[UP['mid']] == ''):
         m_tg_last[UP['mid']] = id
     elif(m_tg_last[UP['mid']] != id):
         push_dingding_test(UP["name"]+'最新动态' + platform_name,text,link)
         m_tg_last[UP['mid']] = id
-            
+
 def xhs_main():
   global Wlog_info
   global up_list
@@ -60,4 +72,4 @@ def xhs_main():
   for i in range(len(up_list)):
     UP = up_list[i]
     xhs_home(UP)
-    time.sleep(6 * 2)
+    time.sleep(3 * 2)
