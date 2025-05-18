@@ -50,12 +50,16 @@ def monitor_bili_dynamic(UP):
       m_tg[UP['mid']] = ''
     jump_url = ''
     ctime = ''
-    url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}'
+    url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}&platform=web&features=itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,forwardListHidden,decorationCard,commentsNewVersion,onlyfansAssetsV2,ugcDelete,onlyfansQaCard'
     res = requests.get(url,headers=headers_bili).json()
     if 'data' not in res:
       Wlog_info(UP['name'] +'动态：返回json不包含data字段---40行')
       return
     list = res['data']['items'][0]
+    # id_str0 =res['data']['items'][0]['id_str']
+    # id_str1 =res['data']['items'][1]['id_str']
+    # id_str2 =res['data']['items'][2]['id_str']
+    # Wlog_info(id_str0+'==='+id_str1+'==='+id_str2)
     if 'module_tag' in list['modules']:
       m_module_tag = list['modules']['module_tag']
       if(m_module_tag['text']=='置顶'):
@@ -81,8 +85,9 @@ def monitor_bili_dynamic(UP):
               text = opus['summary']['text']           
     if text and isinstance(text,str):
       text = text.replace('\n',' ')[0:push_text_len]
+      # Wlog_info(UP['name'] +'动态：日志---64行: ' + id)
     else:
-      Wlog_info(UP['name'] +'动态：text类型错误---66行')
+      Wlog_info(UP['name'] +'动态：text类型错误---66行: '+id)
       return
     if(m_tg[UP['mid']] == ''):
         m_tg[UP['mid']] = id
