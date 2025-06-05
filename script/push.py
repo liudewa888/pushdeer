@@ -7,6 +7,19 @@ ding_key_benben= {}
 ding_key_test= {}
 error_key = {}
 ad = {}
+# 设置超时时间
+class TimeoutSession(requests.Session):
+    def __init__(self, default_timeout=(3,10)):
+        super().__init__()
+        self.default_timeout = default_timeout
+
+    def request(self, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+        return super().request(*args, **kwargs)
+
+requests_session = TimeoutSession(default_timeout=(5,12))
+
 DING_URL ='https://oapi.dingtalk.com/robot/send?access_token='
 def push(type,text,link=None,desc=None):
   tokens = send_key["token"].split(',')
@@ -24,7 +37,7 @@ def push(type,text,link=None,desc=None):
       'text': type + ': ' +text,
       'desp': desp
     }
-    requests.post(url,data)
+    requests_session.post(url,data)
 
 def push_error(type,text,link=None,desc=None):
   token = error_key["token"]
@@ -39,7 +52,7 @@ def push_error(type,text,link=None,desc=None):
     'text': type + ': ' +text,
     'desp': desp
   }
-  requests.post(url,data)
+  requests_session.post(url,data)
 
 def push_dynamic(name,type,content,link=None,ctime=None):
   url="http://10.0.16.17:8002/dynamic/add"
@@ -54,7 +67,7 @@ def push_dynamic(name,type,content,link=None,ctime=None):
     'link': link,
     'ctime': ctime
   }
-  requests.post(url,data)
+  requests_session.post(url,data)
 
 def push_dingding(type,content,link=None,desc=None):
   headers = {'Content-Type':'application/json'}
@@ -85,7 +98,7 @@ def push_dingding(type,content,link=None,desc=None):
   tokens = ding_key["token"].split(',')
   for i in range(len(tokens)):
     url="https://oapi.dingtalk.com/robot/send?access_token=" + tokens[i]
-    requests.post(url,json.dumps(data),headers=headers)
+    requests_session.post(url,json.dumps(data),headers=headers)
 
 def push_dingding_single(UP,type,content,link=None,desc=None):
   if UP['mid'] != '11473291':
@@ -119,7 +132,7 @@ def push_dingding_single(UP,type,content,link=None,desc=None):
   tokens = ding_key_benben["token"].split(',')
   for i in range(len(tokens)):
     url="https://oapi.dingtalk.com/robot/send?access_token=" + tokens[i]
-    requests.post(url,json.dumps(data),headers=headers)
+    requests_session.post(url,json.dumps(data),headers=headers)
 
 def push_dingding_test(type,content,link=None,desc=None):
   global DING_URL
@@ -145,4 +158,4 @@ def push_dingding_test(type,content,link=None,desc=None):
   tokens = ding_key_test["token"].split(',')
   for i in range(len(tokens)):
     url= DING_URL  + tokens[i]
-    requests.post(url,json.dumps(data),headers=headers)
+    requests_session.post(url,json.dumps(data),headers=headers)

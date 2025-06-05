@@ -3,6 +3,20 @@ import time
 from datetime import datetime
 import copy  
 from script.push import push,push_dynamic,push_dingding,push_error,push_dingding_single,push_dingding_test
+
+# 设置超时时间
+class TimeoutSession(requests.Session):
+    def __init__(self, default_timeout=(3,10)):
+        super().__init__()
+        self.default_timeout = default_timeout
+
+    def request(self, *args, **kwargs):
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self.default_timeout
+        return super().request(*args, **kwargs)
+
+requests_session = TimeoutSession(default_timeout=(5,12))
+
 push_text_len = 20
 up_list = [    
     {
@@ -51,7 +65,7 @@ def monitor_bili_dynamic(UP):
     jump_url = ''
     ctime = ''
     url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}&platform=web&features=itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,forwardListHidden,decorationCard,commentsNewVersion,onlyfansAssetsV2,ugcDelete,onlyfansQaCard'
-    res = requests.get(url,headers=headers_bili).json()
+    res = requests_session.get(url,headers=headers_bili).json()
     if 'data' not in res:
       Wlog_info(UP['name'] +'动态：返回json不包含data字段---40行')
       return
@@ -93,7 +107,7 @@ def monitor_bili_dynamic(UP):
         m_tg[UP['mid']] = id
     elif(m_tg[UP['mid']] != id):
         # push(UP["name"]+'动态',text,jump_url)
-        push_dynamic(UP["name"],1,text,jump_url,ctime)
+        # push_dynamic(UP["name"],1,text,jump_url,ctime)
         push_dingding(UP["name"]+'最新动态',text,jump_url)
         push_dingding_test(UP["name"]+'最新动态',text,jump_url)
         push_dingding_single(UP,'最新动态',text,jump_url)
@@ -118,7 +132,7 @@ def monitor_bili_top(UP,jump_id='',link='',type=''):
           return
     if not bool(jump_id):
       url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}'
-      res = requests.get(url,headers=headers_bili).json()
+      res = requests_session.get(url,headers=headers_bili).json()
       if 'data' not in res:
         Wlog_info(UP["name"]+'置顶：返回json没包含data字段 ---86行')
         return
@@ -139,7 +153,7 @@ def monitor_bili_top(UP,jump_id='',link='',type=''):
               break
     if bool(jump_id):
         url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type={type}'
-        res = requests.get(url,headers=headers_bili).json()
+        res = requests_session.get(url,headers=headers_bili).json()
         if 'data' not in res:
           Wlog_info('data not in res ==='+UP["name"]+'==='+ jump_id + '===' + type )
           return
@@ -166,7 +180,7 @@ def monitor_bili_top(UP,jump_id='',link='',type=''):
         elif top_id != m_tg_top[UP["id"]]:
             top_msg = msg
             # push(UP["name"]+'置顶评论',top_msg, link)
-            push_dynamic(UP["name"],2,top_msg,link,ctime)
+            # push_dynamic(UP["name"],2,top_msg,link,ctime)
             push_dingding(UP["name"]+'最新置顶评论',top_msg, link)
             push_dingding_test(UP["name"]+'最新置顶评论',top_msg, link)
             push_dingding_single(UP,'最新置顶评论',top_msg,link)
@@ -197,9 +211,9 @@ def monitor_bili_reply(options,UP):
   pageSize = 20
   pageTotal = options['rcount'] // pageSize + 1
   for pageIndex in range(pageTotal,0,-1):
-    time.sleep(1)
+    time.sleep(2)
     url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type=17&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
-    res = requests.get(url,headers=headers_bili).json()
+    res = requests_session.get(url,headers=headers_bili).json()
     if 'data' not in res:
       Wlog_info('回复：返回json没包含data字段 ---230行')
       return
@@ -270,7 +284,7 @@ def monitor_bili_live_roomId(UP):
     headers = copy.deepcopy(headers_bili)
     headers['Host'] = "api.live.bilibili.com"
     try:
-      response = requests.get(url,headers=headers)
+      response = requests_session.get(url,headers=headers)
     except Exception as e:
             Wlog_info("直播接口服务器异常323行")
             return
@@ -294,7 +308,7 @@ def monitor_bili_live_roomId(UP):
             m_live_f[UP['mid']] = True
             text = '直播开始啦'
             # push(UP["name"]+'直播',text,live_url)
-            push_dynamic(UP["name"],3,text,live_url)
+            # push_dynamic(UP["name"],3,text,live_url)
             push_dingding(UP["name"]+'直播',text,live_url)
             push_dingding_test(UP["name"]+'直播',text,live_url)
             push_dingding_single(UP,'直播',text,live_url)
@@ -303,7 +317,7 @@ def monitor_bili_live_roomId(UP):
             m_live_f[UP['mid']] = False
             text = f'直播结束了(时长: {str(live_minute)}分钟)'
             # push(UP["name"]+'直播',text,live_url)
-            push_dynamic(UP["name"],3,text,live_url)
+            # push_dynamic(UP["name"],3,text,live_url)
             push_dingding(UP["name"]+'直播',text,live_url)
             push_dingding_test(UP["name"]+'直播',text,live_url)
             push_dingding_single(UP,'直播',text,live_url)
@@ -315,6 +329,7 @@ def bili_main():
   for i in range(len(up_list)):
     UP = up_list[i]
     monitor_bili_dynamic(UP)
+    time.sleep(1 * 3)
     monitor_bili_top(UP)
+    time.sleep(1 * 3)
     monitor_bili_live_roomId(UP)
-    time.sleep(6 * 2)
