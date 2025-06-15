@@ -30,7 +30,7 @@ def push(type,text,link=None,desc=None):
   if link:
     desp = desp + f'#### [直达链接]({link})'
   for i in range(len(tokens)):
-    if type[:2] == "笨笨" and 'HBoNnR03Rtoko' in tokens[i]:
+    if type[:2] == "笨总" and 'HBoNnR03Rtoko' in tokens[i]:
       continue
     data ={
       'pushkey': tokens[i],
@@ -55,19 +55,20 @@ def push_error(type,text,link=None,desc=None):
   requests_session.post(url,data)
 
 def push_dynamic(name,type,content,link=None,ctime=None):
-  url="http://10.0.16.17:8002/dynamic/add"
-  # url="http://127.0.0.1:9080/moda/dynamic/add"
-  # url="http://liudewa.cc/moda/dynamic/add"
-  if content and isinstance(content,str):
-    content = content[0:20]
-  data = {
-    'name': name,
-    'type': type,
-    'content': content,
-    'link': link,
-    'ctime': ctime
-  }
-  requests_session.post(url,data)
+  print('stop: ' + name)
+  # url="http://10.0.16.17:8002/dynamic/add"
+  # # url="http://127.0.0.1:9080/moda/dynamic/add"
+  # # url="http://liudewa.cc/moda/dynamic/add"
+  # if content and isinstance(content,str):
+  #   content = content[0:20]
+  # data = {
+  #   'name': name,
+  #   'type': type,
+  #   'content': content,
+  #   'link': link,
+  #   'ctime': ctime
+  # }
+  # requests_session.post(url,data)
 
 def push_dingding(type,content,link=None,desc=None):
   headers = {'Content-Type':'application/json'}
