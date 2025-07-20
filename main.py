@@ -3,7 +3,7 @@ import time
 import random
 import configparser
 import logging
-from script.push import send_key,ding_key,error_key,push_error,ad,ding_key_benben,ding_key_test
+from script.push import send_key,ding_key,error_key,push_error,ad,ding_key_benben,ding_key_test,ding_key_debug
 from bili.index import headers_bili,bili_main,log
 from xhs.index import xhs_main,log_xhs
 # 读取配置文件
@@ -17,12 +17,14 @@ def readConfig():
       error_key['token'] = config['data']['error_key']
       ding_key_benben['token'] = config['data']['ding_key_benben']
       ding_key_test['token'] = config['data']['ding_key_test']
+      ding_key_debug['token'] = config['data']['ding_key_debug']
       ad['ad_info'] = config['data']['ad_info']
     else:
       Wlog_error('配置文件未找到或格式错误')
       sys.exit(0)
 # 写入日志
-logging.basicConfig(filename='running.log',format='\n%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.Formatter.converter = time.localtime
+logging.basicConfig(filename='running.log',format='\n%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 def Wlog_error(text):
  logging.error(text,exc_info=True)
 

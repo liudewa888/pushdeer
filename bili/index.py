@@ -1,8 +1,9 @@
 import requests
+from requests.models import Response
 import time
 from datetime import datetime
 import copy
-from script.push import push, push_dynamic, push_dingding, push_error, push_dingding_single, push_dingding_test
+from script.push import push, push_dynamic, push_dingding, push_error, push_dingding_single, push_dingding_test, push_dingding_by_sign
 
 # 设置超时时间
 
@@ -15,7 +16,14 @@ class TimeoutSession(requests.Session):
     def request(self, *args, **kwargs):
         if "timeout" not in kwargs:
             kwargs["timeout"] = self.default_timeout
-        return super().request(*args, **kwargs)
+        try:
+            return super().request(*args, **kwargs)
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            error_response = Response()
+            error_response.status_code = 400
+            error_response._content = b'{"error": "Request timed out"}'
+            Wlog_info('错误: Request timed out')
+            return error_response
 
 
 requests_session = TimeoutSession(default_timeout=(5, 12))
@@ -72,7 +80,7 @@ def monitor_bili_dynamic(UP):
     url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}&platform=web&features=itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,forwardListHidden,decorationCard,commentsNewVersion,onlyfansAssetsV2,ugcDelete,onlyfansQaCard'
     response = requests_session.get(url, headers=headers_bili)
     if response.status_code != 200:
-     return
+        return
     res = response.json()
     if 'data' not in res:
         Wlog_info(UP['name'] + '动态：返回json不包含data字段---40行')
@@ -146,7 +154,8 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
         url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}'
         response = requests_session.get(url, headers=headers_bili)
         if response.status_code != 200:
-          return
+            Wlog_info('monitor_bili_top: not 200')
+            return
         res = response.json()
         if 'data' not in res:
             Wlog_info(UP["name"]+'置顶：返回json没包含data字段 ---86行')
@@ -165,12 +174,14 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
                     type = '17'
                     jump_id = id_str
                     link = bili_moda_opus_link + jump_id
+                    # 置顶前100回复
+                    monitor_bili_top_reply(UP, {'link': link, 'oid': jump_id})
                     break
     if bool(jump_id):
         url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type={type}'
         response1 = requests_session.get(url, headers=headers_bili)
         if response1.status_code != 200:
-         return
+            return
         res = response1.json()
         if 'data' not in res:
             Wlog_info('data not in res ===' +
@@ -281,17 +292,125 @@ def monitor_bili_reply(options, UP):
                 if text and isinstance(text, str):
                     text = text.replace('\n', ' ')[0:push_text_len]
                 # push(UP["name"]+'最新置顶评论回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
-                push_dingding(UP["name"]+'最新置顶评论回复', text, options['link'],
-                              root_msg+f'(评论数量: {options["rcount"]})')
+                # push_dingding(UP["name"]+'最新置顶评论回复', text, options['link'],
+                #               root_msg+f'(评论数量: {options["rcount"]})')
                 push_dingding_test(
                     UP["name"]+'最新置顶评论回复', text, options['link'], root_msg+f'(评论数量: {options["rcount"]})')
-                push_dingding_single(
-                    UP, '最新置顶评论回复', text, options['link'], root_msg+f'(评论数量: {options["rcount"]})')
+                # push_dingding_single(
+                #     UP, '最新置顶评论回复', text, options['link'], root_msg+f'(评论数量: {options["rcount"]})')
         if (break_flag):
             break
 
-# 计算时间差(分钟)
 
+# UP置顶贴子前100回复
+m_top_reply = {}
+
+
+def monitor_bili_top_reply(UP, options):
+    global m_top_reply
+    target_list = []
+    next_page = ''
+    if UP['mid'] not in m_top_reply:
+        m_top_reply[UP['mid']] = int(time.time())
+        Wlog_info('monitor_bili_top_reply: time ' +
+                  str(m_top_reply[UP['mid']]))
+    is_end = False
+    for i in range(5):
+        if is_end:
+            break
+        url = f'https://api.bilibili.com/x/v2/reply/wbi/main?oid={options["oid"]}&type=17&mode=2&pagination_str=%7B%22offset%22:%22{next_page}%22%7D&plat=1&web_location=1315875&w_rid=de852ee9190f83a12ffda8c1aeaa4b73&wts=1752917640'
+        response = requests_session.get(url, headers=headers_bili)
+        if response.status_code != 200:
+            continue
+        res = response.json()
+        if 'data' not in res:
+            Wlog_info('monitor_bili_top_reply: ' + 'no data ')
+            Wlog_info(url)
+            continue
+        data = res['data']
+        is_end = data['cursor']['is_end']
+        next_page = data['cursor']['pagination_reply']['next_offset']
+        if 'replies' not in data:
+            continue
+        replies = data['replies']
+        for item in replies:
+            parent_comment = ''
+            if ('content' in item):
+                parent_comment = item['content']['message']
+                if parent_comment and isinstance(parent_comment, str):
+                    parent_comment = parent_comment.replace('\n', ' ')[
+                        0:push_text_len]
+            if str(item['mid']) == UP['mid'] and item['ctime'] > m_top_reply[UP['mid']]:
+                data = {
+                    'ctime': item['ctime'],
+                    'up_content': parent_comment,
+                    'oid': item['oid_str'],
+                    'root': item['root_str'],
+                    'rpid': item['rpid_str'],
+                    'parent_comment': None
+                }
+                target_list.append(data)
+                continue
+
+            if not 'up_action' in item:
+                continue
+            if not item['up_action']['reply']:
+                continue
+
+            if item['ctime'] > m_top_reply[UP['mid']]:
+                data = {
+                    'ctime': item['ctime'],
+                    'up_content': '评论: ' + parent_comment,
+                    'oid': item['oid_str'],
+                    'root': item['root_str'],
+                    'rpid': item['rpid_str'],
+                    'parent_comment': None
+                }
+                target_list.append(data)
+
+            if 'replies' in item:
+                up_replies = item['replies']
+                for item1 in up_replies:
+                    if UP['mid'] == str(item1['mid']) and item1['ctime'] > m_top_reply[UP['mid']]:
+                        if ('content' not in item1):
+                            continue
+                        text = item1['content']['message']
+                        if text and isinstance(text, str):
+                            text = text.replace('\n', ' ')[0:push_text_len]
+                            data = {
+                                'ctime': item1['ctime'],
+                                'up_content': text,
+                                'oid': item1['oid_str'],
+                                'root': item1['root_str'],
+                                'rpid': item1['rpid_str'],
+                                'parent_comment': '评论: ' + parent_comment
+                            }
+                            target_list.append(data)
+        time.sleep(6)
+
+    target_list = sorted(target_list, key=lambda x: x['ctime'], reverse=True)
+    if len(target_list) < 1:
+        return
+    Wlog_info('monitor_bili_top_reply: ' + str(target_list[0]['ctime']))
+    if m_top_reply[UP['mid']] < target_list[0]['ctime']:
+        m_top_reply[UP['mid']] = target_list[0]['ctime']
+    for item2 in target_list:
+        content = item2['up_content']
+        if bool(item2['parent_comment']):
+            content = content + ' \n\n ' + item2['parent_comment']
+        data = {
+            'label': UP["name"],
+            'title': '置顶贴子前100回复',
+            'content':  content,
+            'link': options['link']
+        }
+        push_dingding_by_sign(data, ['ding_key_debug'])
+        # push_dingding_test(UP["name"]+'置顶贴子前100回复', item2['up_content'],
+        #                    options['link'], item2['parent_comment'])
+        time.sleep(3)
+
+
+# 计算时间差(分钟)
 
 def get_live_time(start_time):
     current_time = datetime.now()
