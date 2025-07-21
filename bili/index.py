@@ -33,12 +33,14 @@ up_list = [
     {
         'id': '0',
         'name': '莫大',
+        'uname': '莫大',
         'mid': '525121722',
         'roomId': '23229268'
     },
     {
         'id': '1',
         'name': '笨总',
+        'uname': '笨总',
         'mid': '11473291',
         'roomId': '27805029'
     }
@@ -56,7 +58,7 @@ headers_bili = {
     'Cookie': '',
     'Host': 'api.bilibili.com',
     'Origin': 'https://space.bilibili.com',
-    'Referer': 'https://space.bilibili.com/525121722/dynamic',
+    'Referer': 'https://space.bilibili.com/',
     'sec-ch-ua': '"Microsoft Edge";v="113", "Chromium";v="113", "Not-A.Brand";v="24"',
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
@@ -80,6 +82,7 @@ def monitor_bili_dynamic(UP):
     url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}&platform=web&features=itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,forwardListHidden,decorationCard,commentsNewVersion,onlyfansAssetsV2,ugcDelete,onlyfansQaCard'
     response = requests_session.get(url, headers=headers_bili)
     if response.status_code != 200:
+        Wlog_info('monitor_bili_dynamic: not 200')
         return
     res = response.json()
     if 'data' not in res:
@@ -174,10 +177,12 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
                     type = '17'
                     jump_id = id_str
                     link = bili_moda_opus_link + jump_id
-                    # 置顶前100回复
-                    monitor_bili_top_reply(UP, {'link': link, 'oid': jump_id})
                     break
     if bool(jump_id):
+        # Wlog_info('def monitor_bili_top: ' + jump_id)
+        # (置顶 | 最新)动态前100回复
+        monitor_bili_top_reply(
+            UP, {'link': link, 'oid': jump_id, 'type': type})
         url = f'https://api.bilibili.com/x/v2/reply/main?csrf=fcce6f152bd72daf7b7ca4e9db826f77&mode=3&oid={jump_id}&pagination_str=%7B%22offset%22:%22%22%7D&plat=1&seek_rpid=0&type={type}'
         response1 = requests_session.get(url, headers=headers_bili)
         if response1.status_code != 200:
@@ -260,7 +265,7 @@ def monitor_bili_reply(options, UP):
             return
         data = res['data']
         if not bool(data) or 'replies' not in data:
-            Wlog_info('replies not in data ---283行')
+            # Wlog_info('replies not in data ---283行')
             return
         replies = data['replies']
         root = data['root']
@@ -302,7 +307,7 @@ def monitor_bili_reply(options, UP):
             break
 
 
-# UP置顶贴子前100回复
+# UP(置顶 | 最新)动态前100回复
 m_top_reply = {}
 
 
@@ -310,37 +315,40 @@ def monitor_bili_top_reply(UP, options):
     global m_top_reply
     target_list = []
     next_page = ''
-    if UP['mid'] not in m_top_reply:
-        m_top_reply[UP['mid']] = int(time.time())
-        Wlog_info('monitor_bili_top_reply: time ' +
-                  str(m_top_reply[UP['mid']]))
+    if options["oid"] not in m_top_reply:
+        m_top_reply[options["oid"]] = int(time.time())
     is_end = False
     for i in range(5):
+        time.sleep(4)
         if is_end:
             break
-        url = f'https://api.bilibili.com/x/v2/reply/wbi/main?oid={options["oid"]}&type=17&mode=2&pagination_str=%7B%22offset%22:%22{next_page}%22%7D&plat=1&web_location=1315875&w_rid=de852ee9190f83a12ffda8c1aeaa4b73&wts=1752917640'
+        url = f'https://api.bilibili.com/x/v2/reply/wbi/main?oid={options["oid"]}&type={options["type"]}&mode=2&pagination_str=%7B%22offset%22:%22{next_page}%22%7D&plat=1&web_location=1315875&w_rid=de852ee9190f83a12ffda8c1aeaa4b73&wts=1752917640'
         response = requests_session.get(url, headers=headers_bili)
         if response.status_code != 200:
             continue
         res = response.json()
         if 'data' not in res:
-            Wlog_info('monitor_bili_top_reply: ' + 'no data ')
-            Wlog_info(url)
+            Wlog_info('monitor_bili_top_reply: ' + 'no data ' +
+                      str(res['code'])+'---' + res['message'])
             continue
         data = res['data']
         is_end = data['cursor']['is_end']
-        next_page = data['cursor']['pagination_reply']['next_offset']
+        pagination_reply = data['cursor']['pagination_reply']
+        if 'next_offset' in pagination_reply:
+            next_page = pagination_reply['next_offset']
         if 'replies' not in data:
+            Wlog_info('monitor_bili_top_reply: ' + 'no replies ')
+            Wlog_info(url)
             continue
         replies = data['replies']
         for item in replies:
             parent_comment = ''
-            if ('content' in item):
+            if 'content' in item:
                 parent_comment = item['content']['message']
                 if parent_comment and isinstance(parent_comment, str):
                     parent_comment = parent_comment.replace('\n', ' ')[
                         0:push_text_len]
-            if str(item['mid']) == UP['mid'] and item['ctime'] > m_top_reply[UP['mid']]:
+            if str(item['mid']) == UP['mid'] and item['ctime'] > m_top_reply[options["oid"]]:
                 data = {
                     'ctime': item['ctime'],
                     'up_content': parent_comment,
@@ -357,7 +365,27 @@ def monitor_bili_top_reply(UP, options):
             if not item['up_action']['reply']:
                 continue
 
-            if item['ctime'] > m_top_reply[UP['mid']]:
+            is_up_reply = False
+            if 'replies' in item:
+                up_replies = item['replies']
+                for item1 in up_replies:
+                    if UP['mid'] == str(item1['mid']) and item1['ctime'] > m_top_reply[options["oid"]]:
+                        if ('content' not in item1):
+                            continue
+                        text = item1['content']['message']
+                        if text and isinstance(text, str):
+                            text = text.replace('\n', ' ')[0:push_text_len]
+                        data = {
+                            'ctime': item1['ctime'],
+                            'up_content': text,
+                            'oid': item1['oid_str'],
+                            'root': item1['root_str'],
+                            'rpid': item1['rpid_str'],
+                            'parent_comment': '评论: ' + parent_comment
+                        }
+                        is_up_reply = True
+                        target_list.append(data)
+            if not is_up_reply and item['ctime'] > m_top_reply[options["oid"]]:
                 data = {
                     'ctime': item['ctime'],
                     'up_content': '评论: ' + parent_comment,
@@ -367,46 +395,25 @@ def monitor_bili_top_reply(UP, options):
                     'parent_comment': None
                 }
                 target_list.append(data)
-
-            if 'replies' in item:
-                up_replies = item['replies']
-                for item1 in up_replies:
-                    if UP['mid'] == str(item1['mid']) and item1['ctime'] > m_top_reply[UP['mid']]:
-                        if ('content' not in item1):
-                            continue
-                        text = item1['content']['message']
-                        if text and isinstance(text, str):
-                            text = text.replace('\n', ' ')[0:push_text_len]
-                            data = {
-                                'ctime': item1['ctime'],
-                                'up_content': text,
-                                'oid': item1['oid_str'],
-                                'root': item1['root_str'],
-                                'rpid': item1['rpid_str'],
-                                'parent_comment': '评论: ' + parent_comment
-                            }
-                            target_list.append(data)
-        time.sleep(6)
-
     target_list = sorted(target_list, key=lambda x: x['ctime'], reverse=True)
     if len(target_list) < 1:
         return
     Wlog_info('monitor_bili_top_reply: ' + str(target_list[0]['ctime']))
-    if m_top_reply[UP['mid']] < target_list[0]['ctime']:
-        m_top_reply[UP['mid']] = target_list[0]['ctime']
+    if m_top_reply[options["oid"]] < target_list[0]['ctime']:
+        m_top_reply[options["oid"]] = target_list[0]['ctime']
     for item2 in target_list:
         content = item2['up_content']
         if bool(item2['parent_comment']):
             content = content + ' \n\n ' + item2['parent_comment']
         data = {
-            'label': UP["name"],
-            'title': '置顶贴子前100回复',
+            'label': UP["uname"],
+            'title': '(置顶 | 最新)动态前100回复',
             'content':  content,
             'link': options['link']
         }
-        push_dingding_by_sign(data, ['ding_key_debug'])
-        # push_dingding_test(UP["name"]+'置顶贴子前100回复', item2['up_content'],
-        #                    options['link'], item2['parent_comment'])
+        # push_dingding_by_sign(data, ['ding_key_debug'])
+        push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
+                           data['link'])
         time.sleep(3)
 
 
