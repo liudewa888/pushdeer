@@ -1,5 +1,7 @@
 import requests
 from requests.models import Response
+import hashlib
+from urllib.parse import quote, urlencode
 import time
 from datetime import datetime
 import copy
@@ -67,6 +69,15 @@ headers_bili = {
     'Sec-Fetch-Site': 'same-site',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57'
 }
+
+
+def get_w_rid(params):
+    m = urlencode(params, quote_via=quote)
+    string = m + "ea1db124af3c7062474693fa704f4ff8"
+    w_rid = hashlib.md5(string.encode("utf-8")).hexdigest()
+    return w_rid
+
+
 # UP动态
 m_tg = {}
 
@@ -86,13 +97,10 @@ def monitor_bili_dynamic(UP):
         return
     res = response.json()
     if 'data' not in res:
-        Wlog_info(UP['name'] + '动态：返回json不包含data字段---40行')
+        Wlog_info('monitor_bili_dynamic: not data' +
+                  str(res['code']) + '---' + res['message'])
         return
     list = res['data']['items'][0]
-    # id_str0 =res['data']['items'][0]['id_str']
-    # id_str1 =res['data']['items'][1]['id_str']
-    # id_str2 =res['data']['items'][2]['id_str']
-    # Wlog_info(id_str0+'==='+id_str1+'==='+id_str2)
     if 'module_tag' in list['modules']:
         m_module_tag = list['modules']['module_tag']
         if (m_module_tag['text'] == '置顶'):
@@ -161,7 +169,8 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
             return
         res = response.json()
         if 'data' not in res:
-            Wlog_info(UP["name"]+'置顶：返回json没包含data字段 ---86行')
+            Wlog_info('monitor_bili_top: not data' +
+                      str(res['code']) + '---' + res['message'])
             return
         list = res['data']['items']
         if (len(list) == 0):
@@ -189,8 +198,8 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
             return
         res = response1.json()
         if 'data' not in res:
-            Wlog_info('data not in res ===' +
-                      UP["name"]+'===' + jump_id + '===' + type)
+            Wlog_info('monitor_bili_top2: not data' +
+                      str(res['code']) + '---' + res['message'])
             return
         data = res['data']
         if 'top_replies' not in data:
@@ -261,7 +270,8 @@ def monitor_bili_reply(options, UP):
         url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type=17&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
         res = requests_session.get(url, headers=headers_bili).json()
         if 'data' not in res:
-            Wlog_info('回复：返回json没包含data字段 ---230行')
+            Wlog_info('monitor_bili_reply: not data' +
+                      str(res['code']) + '---' + res['message'])
             return
         data = res['data']
         if not bool(data) or 'replies' not in data:
@@ -314,7 +324,7 @@ m_top_reply = {}
 def monitor_bili_top_reply(UP, options):
     global m_top_reply
     target_list = []
-    next_page = ''
+    next_page = ""
     if options["oid"] not in m_top_reply:
         m_top_reply[options["oid"]] = int(time.time())
     is_end = False
@@ -322,14 +332,31 @@ def monitor_bili_top_reply(UP, options):
         time.sleep(4)
         if is_end:
             break
-        url = f'https://api.bilibili.com/x/v2/reply/wbi/main?oid={options["oid"]}&type={options["type"]}&mode=2&pagination_str=%7B%22offset%22:%22{next_page}%22%7D&plat=1&web_location=1315875&w_rid=de852ee9190f83a12ffda8c1aeaa4b73&wts=1752917640'
-        response = requests_session.get(url, headers=headers_bili)
+        wts = int(time.time())
+        nextPage = '{"offset":\"%s\"}' % next_page
+        params = {
+            "mode": 2,
+            "oid": options["oid"],
+            "pagination_str": nextPage,
+            "plat": 1,
+            "seek_rpid": "",
+            "type": options["type"],
+            "web_location": 1315875,
+            "wts": wts
+        }
+        w_rid = get_w_rid(params)
+        url = f'https://api.bilibili.com/x/v2/reply/wbi/main'
+        params['w_rid'] = w_rid
+        response = requests_session.get(
+            url, params=params, headers=headers_bili)
         if response.status_code != 200:
+            Wlog_info('monitor_bili_top_reply: no 200')
             continue
         res = response.json()
         if 'data' not in res:
-            Wlog_info('monitor_bili_top_reply: ' + 'no data ' +
+            Wlog_info('monitor_bili_top_reply: no data' +
                       str(res['code'])+'---' + res['message'])
+            Wlog_info(response.url)
             continue
         data = res['data']
         is_end = data['cursor']['is_end']
