@@ -30,7 +30,7 @@ class TimeoutSession(requests.Session):
 
 requests_session = TimeoutSession(default_timeout=(5, 12))
 
-push_text_len = 20
+push_text_len = 24
 up_list = [
     {
         'id': '0',
@@ -317,7 +317,7 @@ def monitor_bili_reply(options, UP):
             break
 
 
-# UP(置顶 | 最新)动态前100回复
+# UP(置顶|最新)动态前100回复
 m_top_reply = {}
 
 
@@ -434,7 +434,7 @@ def monitor_bili_top_reply(UP, options):
             content = content + ' \n\n ' + item2['parent_comment']
         data = {
             'label': UP["uname"],
-            'title': '(置顶 | 最新)动态前100回复',
+            'title': '(置顶|最新)动态前100回复',
             'content':  content,
             'link': options['link']
         }

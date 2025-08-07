@@ -29,7 +29,7 @@ requests_session = TimeoutSession(default_timeout=(5,12))
 ding_key_dicts = {
     'ding_key_debug': ding_key_debug,
 }
-
+push_text_len = 24
 global_headers = {'Content-Type': 'application/json'}
 DING_URL ='https://oapi.dingtalk.com/robot/send?access_token='
 def push(type,text,link=None,desc=None):
@@ -154,7 +154,7 @@ def push_dingding_test(type,content,link=None,desc=None):
   global DING_URL
   headers = {'Content-Type':'application/json'}
   if content and isinstance(content,str):
-    text1 = content[0:20]
+    text1 = content[0:push_text_len]
   else:
     return
   
@@ -195,6 +195,7 @@ def get_dingding_sign(secret):
 
 def push_dingding_by_sign(msg_data, token_keys=[]):
     global DING_URL
+    global push_text_len
     tokens = []
     for i in range(len(token_keys)):
         tokens = tokens + ding_key_dicts[token_keys[i]]["token"].split(',')
@@ -204,14 +205,15 @@ def push_dingding_by_sign(msg_data, token_keys=[]):
         token = item[0]
         secret = item[1]
         url = DING_URL + token + get_dingding_sign(secret)
-        title = msg_data['label'] + ' ' + msg_data['title']
 
+        title = msg_data['label'] + ' ' + msg_data['title'] + f' \n\n {msg_data["content"][0:push_text_len]}'
+        text = f'#### { title } \n\n {msg_data["content"]}'
         if 'link' in msg_data:
-            text = f'#### { title } \n\n {msg_data["content"]} \n\n [直达链接]({msg_data["link"]})'
+            text = f'{text} \n\n [直达链接]({msg_data["link"]})'
         if 'img' in msg_data:
-            text = f'#### { title } \n\n {msg_data["content"]} \n\n ![图片]({msg_data["img"]})'
+            text = f'{text} \n\n ![图片]({msg_data["img"]})'
         # if ad['ad_info']:
-        #   text = text + f' \n\n {ad["ad_info"]}'
+        #   text = f'{text} \n\n {ad["ad_info"]}'
 
         data = {
             "msgtype": "markdown",
