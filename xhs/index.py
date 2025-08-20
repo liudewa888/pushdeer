@@ -2,7 +2,7 @@ import requests
 import time
 import re
 import json
-from script.push import push_dingding_test
+from script.push import push_dingding_test, push_dingding_single
 push_text_len = 20
 platform_name = '(小红书)'
 up_list = [
@@ -10,7 +10,7 @@ up_list = [
         'id': '0',
         'name': '罗洄头',
         'mid': '6534ea9b000000000400abdd'
-    },    
+    },
     {
         'id': '1',
         'name': '笨总',
@@ -71,6 +71,8 @@ def xhs_home(UP):
             m_tg_last[UP['mid']] = id
         elif (m_tg_last[UP['mid']] != id):
             push_dingding_test(UP["name"]+'最新动态' + platform_name, text, link)
+            push_dingding_single(UP, '最新动态' +
+                                 platform_name, text, link)
             m_tg_last[UP['mid']] = id
 
 
