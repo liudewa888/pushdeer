@@ -30,7 +30,7 @@ class TimeoutSession(requests.Session):
 
 requests_session = TimeoutSession(default_timeout=(5, 12))
 
-push_text_len = 24
+push_text_len = 22
 up_list = [
     {
         'id': '0',
@@ -71,6 +71,25 @@ headers_bili = {
 }
 
 
+def is_login():
+    global noLogin
+    global headers_bili
+    response = requests_session.get(
+        "https://api.bilibili.com/x/web-interface/nav", verify=False, headers=headers_bili)
+    if response.status_code != 200:
+        return False
+    login_res = response.json()
+    if login_res['code'] == 0:
+        Wlog_info(f"bili cookie值有效, {login_res['data']['uname']}，已登录！")
+        return True
+    else:
+        if not noLogin:
+            push_error('异常', 'py_A bili cookie失效,请重新登录')
+        Wlog_info('bili cookie失效,请重新登录')
+        noLogin = True
+        return False
+
+
 def get_w_rid(params):
     m = urlencode(params, quote_via=quote)
     string = m + "ea1db124af3c7062474693fa704f4ff8"
@@ -87,9 +106,14 @@ def monitor_bili_dynamic(UP):
     global noLogin
     global headers_bili
     if UP['mid'] not in m_tg:
-        m_tg[UP['mid']] = ''
+        m_tg[UP['mid']] = {
+            'id': '',
+            'ctime': -1,
+            'text': ''
+        }
     jump_url = ''
-    ctime = ''
+    # url = 'http://liudewa.cc/test/monitor_bili_dynamic.json'
+    # response = requests_session.get(url)
     url = f'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid={UP["mid"]}&platform=web&features=itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,forwardListHidden,decorationCard,commentsNewVersion,onlyfansAssetsV2,ugcDelete,onlyfansQaCard'
     response = requests_session.get(url, headers=headers_bili)
     if response.status_code != 200:
@@ -112,6 +136,7 @@ def monitor_bili_dynamic(UP):
     text = list['modules']['module_dynamic']['desc']
     module_author = list['modules']['module_author']
     ctime = module_author['pub_ts']
+    textTemp = ''
     if text:
         text = text['text']
     else:
@@ -125,27 +150,50 @@ def monitor_bili_dynamic(UP):
             if 'summary' in opus:
                 text = opus['summary']['text']
     if text and isinstance(text, str):
-        text = text.replace('\n', ' ')[0:push_text_len]
-        # Wlog_info(UP['name'] +'动态：日志---64行: ' + id)
+        textTemp = text.replace('\n', ' ')
+        text = textTemp[0:push_text_len]
     else:
-        Wlog_info(UP['name'] + '动态：text类型错误---66行: '+id)
+        Wlog_info(UP['name'] + ' monitor_bili_dynamic：not isinstance str '+id)
         return
-    if (m_tg[UP['mid']] == ''):
-        m_tg[UP['mid']] = id
-    elif (m_tg[UP['mid']] != id):
-        # push(UP["name"]+'动态',text,jump_url)
-        # push_dynamic(UP["name"],1,text,jump_url,ctime)
-        push_dingding(UP["name"]+'最新动态', text, jump_url)
-        push_dingding_test(UP["name"]+'最新动态', text, jump_url)
-        push_dingding_single(UP, '最新动态', text, jump_url)
-        m_tg[UP['mid']] = id
+    if (m_tg[UP['mid']]['id'] == ''):
+        m_tg[UP['mid']]['id'] = id
+        m_tg[UP['mid']]['ctime'] = ctime
+        m_tg[UP['mid']]['text'] = textTemp
+    elif m_tg[UP['mid']]['id'] != id:
+        if ctime > m_tg[UP['mid']]['ctime']:
+            data = {
+                'label': UP["uname"],
+                'title': '最新动态',
+                'content':  text,
+                'link': jump_url
+            }
+            # push_dingding_by_sign(data, ['ding_key_debug'])
+            push_dingding(data['label']+ ' ' +
+                          data['title'], data['content'], data['link'])
+            push_dingding_test(data['label']+ ' ' +
+                               data['title'], data['content'], data['link'])
+            push_dingding_single(data['label'],
+                                 data['title'], data['content'], data['link'])
+            m_tg[UP['mid']]['id'] = id
+            m_tg[UP['mid']]['ctime'] = ctime
+            m_tg[UP['mid']]['text'] = textTemp
+        else:
+            data = {
+                'label': UP["uname"],
+                'title': '被删除动态',
+                'content':  m_tg[UP['mid']]['text'],
+            }
+            # push_dingding_by_sign(data, ['ding_key_debug'])
+            push_dingding_test(data['label']+ ' ' +
+                               data['title'], data['content'])
+
     if bool(rid_str):
         UP1 = copy.deepcopy(UP)
         UP1['id'] = '最新动态' + UP1['id'] + rid_str
         UP1['name'] = UP1['name'] + '最新动态'
         monitor_bili_top(UP1, rid_str, jump_url, type)
     else:
-        Wlog_info(UP1['name'] + '===id为空')
+        Wlog_info(UP1['name'] + 'monitor_bili_dynamic：rid_str is False')
 
 
 # UP置顶
@@ -169,6 +217,8 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
             return
         res = response.json()
         if 'data' not in res:
+            if res['code'] == -352:
+                is_login()
             Wlog_info('monitor_bili_top: not data' +
                       str(res['code']) + '---' + res['message'])
             return
@@ -232,16 +282,7 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
         monitor_bili_reply({'oid': jump_id, 'link': link,
                            'root': rpid, 'rcount': rcount}, UP)
     else:
-        response2 = requests_session.get(
-            "https://api.bilibili.com/x/web-interface/nav", verify=False, headers=headers_bili)
-        if response2.status_code != 200:
-            return
-        login_res = response2.json()
-        if login_res['code'] == 0:
-            Wlog_info(f"bili cookie值有效, {login_res['data']['uname']}，已登录！")
-        else:
-            push_error('异常', 'py_A bili cookie失效,请重新登录')
-            Wlog_info('bili cookie失效,请重新登录')
+        if not is_login():
             noLogin = True
 
 

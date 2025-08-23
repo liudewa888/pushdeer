@@ -32,7 +32,7 @@ requests_session = TimeoutSession(default_timeout=(5, 12))
 ding_key_dicts = {
     'ding_key_debug': ding_key_debug,
 }
-push_text_len = 24
+push_text_len = 22
 global_headers = {'Content-Type': 'application/json'}
 DING_URL = 'https://oapi.dingtalk.com/robot/send?access_token='
 
@@ -125,32 +125,27 @@ def push_dingding(type, content, link=None, desc=None):
 
 def push_dingding_single(UP, type, content, link=None, desc=None):
     global DING_URL
+    global push_text_len
+    global global_headers
     if UP['mid'] not in ('11473291', '665bede70000000007007529'):
         return
-    type = UP['name'] + type
-    headers = {'Content-Type': 'application/json'}
+    type = UP['name'] + ' ' +type
+    title = ''
     if content and isinstance(content, str):
-        text1 = content[0:20]
-    else:
-        return
-
+        title = content[0:push_text_len]
     text = f'#### { type} \n\n {content}'
     if link:
-        text = f'#### { type} \n\n {content} \n\n [直达链接]({link})'
+        text = f'{text} \n\n [直达链接]({link})'
 
     if desc:
-        text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc}'
+        text = f'{text} \n\n {desc}'
 
     if ad['ad_info']:
-        if desc:
-            text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc} \n\n {ad["ad_info"]}'
-        else:
-            text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {ad["ad_info"]}'
-
+        text = f'{text} \n\n {ad["ad_info"]}'
     data = {
         "msgtype": "markdown",
         "markdown": {
-            "title": '通知 ' + type + ' ' + text1,
+            "title": '通知 ' + type + ' ' + title,
             "text": text
         }
     }
@@ -158,28 +153,29 @@ def push_dingding_single(UP, type, content, link=None, desc=None):
     tokens = ding_key_benben["token"].split(',')
     for i in range(len(tokens)):
         url = DING_URL + tokens[i]
-        requests_session.post(url, json.dumps(data), headers=headers)
+        requests_session.post(url, json.dumps(data), headers=global_headers)
 
 
 def push_dingding_test(type, content, link=None, desc=None):
     global DING_URL
-    headers = {'Content-Type': 'application/json'}
+    global push_text_len
+    global global_headers
+    title = ''
     if content and isinstance(content, str):
-        text1 = content[0:push_text_len]
-    else:
-        return
-
+        title = content[0:push_text_len]
     text = f'#### { type} \n\n {content}'
     if link:
-        text = f'#### { type} \n\n {content} \n\n [直达链接]({link})'
+        text = f'{text} \n\n [直达链接]({link})'
 
     if desc:
-        text = f'#### { type} \n\n {content} \n\n [直达链接]({link}) \n\n {desc}'
+        text = f'{text} \n\n {desc}'
 
+    if ad['ad_info']:
+        text = f'{text} \n\n {ad["ad_info"]}'
     data = {
         "msgtype": "markdown",
         "markdown": {
-            "title": '通知 ' + type + ' ' + text1,
+            "title": '通知 ' + type + ' ' + title,
             "text": text
         }
     }
@@ -187,7 +183,7 @@ def push_dingding_test(type, content, link=None, desc=None):
     tokens = ding_key_test["token"].split(',')
     for i in range(len(tokens)):
         url = DING_URL + tokens[i]
-        requests_session.post(url, json.dumps(data), headers=headers)
+        requests_session.post(url, json.dumps(data), headers=global_headers)
 
 
 def get_dingding_sign(secret):
@@ -207,6 +203,7 @@ def get_dingding_sign(secret):
 def push_dingding_by_sign(msg_data, token_keys=[]):
     global DING_URL
     global push_text_len
+    global global_headers
     tokens = []
     for i in range(len(token_keys)):
         tokens = tokens + ding_key_dicts[token_keys[i]]["token"].split(',')
@@ -216,15 +213,18 @@ def push_dingding_by_sign(msg_data, token_keys=[]):
         token = item[0]
         secret = item[1]
         url = DING_URL + token + get_dingding_sign(secret)
-        title = msg_data['label'] + ' ' + msg_data['title'] + \
-            f' \n\n {msg_data["content"][0:push_text_len]}'
-        text = f'#### { title } \n\n {msg_data["content"]}'
+
+        title_temp = msg_data['label'] + ' ' + msg_data['title']
+        
+        title = f'{title_temp} \n\n {msg_data["content"][0:push_text_len]}'
+
+        text = f'#### { title_temp } \n\n {msg_data["content"]}'
         if 'link' in msg_data:
             text = f'{text} \n\n [直达链接]({msg_data["link"]})'
         if 'img' in msg_data:
             text = f'{text} \n\n ![图片]({msg_data["img"]})'
-        # if ad['ad_info']:
-        #   text = f'{text} \n\n {ad["ad_info"]}'
+        if ad['ad_info']:
+          text = f'{text} \n\n {ad["ad_info"]}'
 
         data = {
             "msgtype": "markdown",
@@ -234,3 +234,4 @@ def push_dingding_by_sign(msg_data, token_keys=[]):
             }
         }
         requests_session.post(url, json.dumps(data), headers=global_headers)
+
