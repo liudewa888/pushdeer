@@ -168,9 +168,9 @@ def monitor_bili_dynamic(UP):
                 'link': jump_url
             }
             # push_dingding_by_sign(data, ['ding_key_debug'])
-            push_dingding(data['label']+ ' ' +
+            push_dingding(data['label'] + ' ' +
                           data['title'], data['content'], data['link'])
-            push_dingding_test(data['label']+ ' ' +
+            push_dingding_test(data['label'] + ' ' +
                                data['title'], data['content'], data['link'])
             push_dingding_single(data['label'],
                                  data['title'], data['content'], data['link'])
@@ -184,7 +184,7 @@ def monitor_bili_dynamic(UP):
                 'content':  m_tg[UP['mid']]['text'],
             }
             # push_dingding_by_sign(data, ['ding_key_debug'])
-            push_dingding_test(data['label']+ ' ' +
+            push_dingding_test(data['label'] + ' ' +
                                data['title'], data['content'])
 
     if bool(rid_str):
@@ -286,76 +286,86 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
             noLogin = True
 
 
-# UP置顶回复
-start_reply = {}
-end_reply = {}
+# UP置顶回复(前40)
+m_reply_reply = {}
 
 
 def monitor_bili_reply(options, UP):
-    global start_reply
-    global end_reply
+    global m_reply_reply
+    global push_text_len
+    target_list = []
+    if options["oid"] not in m_reply_reply:
+        m_reply_reply[options["oid"]] = int(time.time())
 
-    if UP['mid'] not in start_reply:
-        start_reply[UP['mid']] = {'rpid': -1, 'mid': -1}
-
-    if UP['mid'] not in end_reply:
-        end_reply[UP['mid']] = {'rpid': -1, 'mid': -1}
-
-    end_reply_rpid = int(end_reply[UP['mid']]['rpid'])
-    start_reply_rpid = int(start_reply[UP['mid']]['rpid'])
-    break_flag = False
     pageSize = 20
     pageTotal = options['rcount'] // pageSize + 1
-    for pageIndex in range(pageTotal, 0, -1):
-        time.sleep(2)
+    pageEnd = pageTotal - 2
+    pageEnd = max(pageEnd, 0)
+    for pageIndex in range(pageTotal, pageEnd, -1):
+        time.sleep(3)
+        # url = 'http://liudewa.cc/test/monitor_bili_reply.json'
+        # response = requests_session.get(url)
         url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type=17&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
-        res = requests_session.get(url, headers=headers_bili).json()
+        response = requests_session.get(url, headers=headers_bili)
+        if response.status_code != 200:
+          Wlog_info('monitor_bili_reply: not 200')
+          return
+        res = response.json()
         if 'data' not in res:
             Wlog_info('monitor_bili_reply: not data' +
                       str(res['code']) + '---' + res['message'])
             return
         data = res['data']
         if not bool(data) or 'replies' not in data:
-            # Wlog_info('replies not in data ---283行')
             return
+        UP_mid = ''
+        if 'mid' in data['upper']:
+            UP_mid = str(data['upper']['mid'])
+        if UP_mid == '':
+            UP_mid = UP['mid']
         replies = data['replies']
         root = data['root']
         root_msg = root['content']['message']
         if root_msg and isinstance(root_msg, str):
-            root_msg = '评论: ' + root_msg.replace('\n', ' ')[0:10]
-        le = len(replies)-1
-        for i in range(le, -1, -1):
-            current_start_reply_rpid = int(start_reply[UP['mid']]['rpid'])
-            reply = replies[i]
-            rpid = reply['rpid_str']
-            mid = reply['mid']
-            msg = reply['content']['message']
-            rpid_int = int(rpid)
-            if pageIndex == pageTotal and i == le:
-                if end_reply_rpid < rpid_int:
-                    ctime = reply['ctime']
-                    end_reply[UP['mid']] = {
-                        'ctime': ctime, 'mid': mid, 'rpid': rpid}
-            if rpid_int <= end_reply_rpid or end_reply_rpid == -1:
-                break_flag = True
-                break
-            if str(mid) == UP["mid"] and start_reply_rpid < rpid_int:
-                ctime = reply['ctime']
-                if current_start_reply_rpid < rpid_int:
-                    start_reply[UP['mid']] = {
-                        'ctime': ctime, 'mid': mid, 'rpid': rpid}
-                text = msg
+            root_msg = root_msg.replace('\n', ' ')[0:push_text_len-10]
+
+        for item in replies:
+            if UP_mid == str(item['mid_str']) and item['ctime'] > m_reply_reply[options["oid"]]:
+                if ('content' not in item):
+                    continue
+                text = item['content']['message']
                 if text and isinstance(text, str):
                     text = text.replace('\n', ' ')[0:push_text_len]
-                # push(UP["name"]+'最新置顶评论回复',text,options['link'],root_msg+f'(评论数量: {options["rcount"]})')
-                # push_dingding(UP["name"]+'最新置顶评论回复', text, options['link'],
-                #               root_msg+f'(评论数量: {options["rcount"]})')
-                push_dingding_test(
-                    UP["name"]+'最新置顶评论回复', text, options['link'], root_msg+f'(评论数量: {options["rcount"]})')
-                # push_dingding_single(
-                #     UP, '最新置顶评论回复', text, options['link'], root_msg+f'(评论数量: {options["rcount"]})')
-        if (break_flag):
-            break
+                data = {
+                    'ctime': item['ctime'],
+                    'up_content': text,
+                    'oid': item['oid_str'],
+                    'root': item['root_str'],
+                    'rpid': item['rpid_str'],
+                    'parent_comment': '评论: ' + root_msg + f'(评论数量: {options["rcount"]})'
+                }
+                target_list.append(data)
+        target_list = sorted(
+            target_list, key=lambda x: x['ctime'], reverse=True)
+        if len(target_list) < 1:
+            return
+        Wlog_info('monitor_bili_reply: ' + str(target_list[0]['ctime']))
+        if m_reply_reply[options["oid"]] < target_list[0]['ctime']:
+            m_reply_reply[options["oid"]] = target_list[0]['ctime']
+        for item2 in target_list:
+            content = item2['up_content']
+            if bool(item2['parent_comment']):
+                content = content + ' \n\n ' + item2['parent_comment']
+            data = {
+                'label': UP["uname"],
+                'title': '最新置顶评论回复',
+                'content':  content,
+                'link': options['link']
+            }
+            # push_dingding_by_sign(data, ['ding_key_debug'])
+            push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
+                              data['link'])
+            time.sleep(3)
 
 
 # UP(置顶|最新)动态前100回复
@@ -364,6 +374,7 @@ m_top_reply = {}
 
 def monitor_bili_top_reply(UP, options):
     global m_top_reply
+    global push_text_len
     target_list = []
     next_page = ""
     if options["oid"] not in m_top_reply:

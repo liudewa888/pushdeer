@@ -216,7 +216,7 @@ def push_dingding_by_sign(msg_data, token_keys=[]):
 
         title_temp = msg_data['label'] + ' ' + msg_data['title']
         
-        title = f'{title_temp} \n\n {msg_data["content"][0:push_text_len]}'
+        title = f'{title_temp} {msg_data["content"][0:push_text_len]}'
 
         text = f'#### { title_temp } \n\n {msg_data["content"]}'
         if 'link' in msg_data:
