@@ -172,8 +172,8 @@ def monitor_bili_dynamic(UP):
                           data['title'], data['content'], data['link'])
             push_dingding_test(data['label'] + ' ' +
                                data['title'], data['content'], data['link'])
-            push_dingding_single(data['label'],
-                                 data['title'], data['content'], data['link'])
+            push_dingding_single(
+                UP, data['title'], data['content'], data['link'])
             m_tg[UP['mid']]['id'] = id
             m_tg[UP['mid']]['ctime'] = ctime
             m_tg[UP['mid']]['text'] = textTemp
@@ -230,10 +230,12 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
             if 'module_tag' in list[i]['modules']:
                 m_module_tag = list[i]['modules']['module_tag']
                 if (m_module_tag['text'] == '置顶'):
-                    id_str = list[i]['id_str']
-                    # basic = list[i]['basic']
                     # 默认类型
-                    type = '17'
+                    # type = '17'
+                    # id_str = list[i]['id_str']
+                    basic = list[i]['basic']
+                    type = str(basic['comment_type'])
+                    id_str = basic['comment_id_str']
                     jump_id = id_str
                     link = bili_moda_opus_link + jump_id
                     break
@@ -308,8 +310,8 @@ def monitor_bili_reply(options, UP):
         url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type=17&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
         response = requests_session.get(url, headers=headers_bili)
         if response.status_code != 200:
-          Wlog_info('monitor_bili_reply: not 200')
-          return
+            Wlog_info('monitor_bili_reply: not 200')
+            return
         res = response.json()
         if 'data' not in res:
             Wlog_info('monitor_bili_reply: not data' +
@@ -364,7 +366,7 @@ def monitor_bili_reply(options, UP):
             }
             # push_dingding_by_sign(data, ['ding_key_debug'])
             push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
-                              data['link'])
+                               data['link'])
             time.sleep(3)
 
 
