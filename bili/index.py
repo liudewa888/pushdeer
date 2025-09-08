@@ -174,9 +174,6 @@ def monitor_bili_dynamic(UP):
                                data['title'], data['content'], data['link'])
             push_dingding_single(
                 UP, data['title'], data['content'], data['link'])
-            m_tg[UP['mid']]['id'] = id
-            m_tg[UP['mid']]['ctime'] = ctime
-            m_tg[UP['mid']]['text'] = textTemp
         else:
             data = {
                 'label': UP["uname"],
@@ -186,7 +183,9 @@ def monitor_bili_dynamic(UP):
             # push_dingding_by_sign(data, ['ding_key_debug'])
             push_dingding_test(data['label'] + ' ' +
                                data['title'], data['content'])
-
+        m_tg[UP['mid']]['id'] = id
+        m_tg[UP['mid']]['ctime'] = ctime
+        m_tg[UP['mid']]['text'] = textTemp
     if bool(rid_str):
         UP1 = copy.deepcopy(UP)
         UP1['id'] = '最新动态' + UP1['id'] + rid_str
