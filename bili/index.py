@@ -229,6 +229,8 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
             if 'module_tag' in list[i]['modules']:
                 m_module_tag = list[i]['modules']['module_tag']
                 if (m_module_tag['text'] == '置顶'):
+                    opus_id = list[i]['id_str']
+                    link = bili_moda_opus_link + opus_id
                     # 默认类型
                     # type = '17'
                     # id_str = list[i]['id_str']
@@ -236,7 +238,6 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
                     type = str(basic['comment_type'])
                     id_str = basic['comment_id_str']
                     jump_id = id_str
-                    link = bili_moda_opus_link + jump_id
                     break
     if bool(jump_id):
         # Wlog_info('def monitor_bili_top: ' + jump_id)
@@ -346,27 +347,27 @@ def monitor_bili_reply(options, UP):
                     'parent_comment': '评论: ' + root_msg + f'(评论数量: {options["rcount"]})'
                 }
                 target_list.append(data)
-        target_list = sorted(
-            target_list, key=lambda x: x['ctime'], reverse=True)
-        if len(target_list) < 1:
-            return
-        Wlog_info('monitor_bili_reply: ' + str(target_list[0]['ctime']))
-        if m_reply_reply[options["oid"]] < target_list[0]['ctime']:
-            m_reply_reply[options["oid"]] = target_list[0]['ctime']
-        for item2 in target_list:
-            content = item2['up_content']
-            if bool(item2['parent_comment']):
-                content = content + ' \n\n ' + item2['parent_comment']
-            data = {
-                'label': UP["uname"],
-                'title': '最新置顶评论回复',
-                'content':  content,
-                'link': options['link']
-            }
-            # push_dingding_by_sign(data, ['ding_key_debug'])
-            push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
-                               data['link'])
-            time.sleep(3)
+    target_list = sorted(
+        target_list, key=lambda x: x['ctime'], reverse=True)
+    if len(target_list) < 1:
+        return
+    Wlog_info('monitor_bili_reply: ' + str(target_list[0]['ctime']))
+    if m_reply_reply[options["oid"]] < target_list[0]['ctime']:
+        m_reply_reply[options["oid"]] = target_list[0]['ctime']
+    for item2 in target_list:
+        content = item2['up_content']
+        if bool(item2['parent_comment']):
+            content = content + ' \n\n ' + item2['parent_comment']
+        data = {
+            'label': UP["uname"],
+            'title': '最新置顶评论回复',
+            'content':  content,
+            'link': options['link']
+        }
+        # push_dingding_by_sign(data, ['ding_key_debug'])
+        push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
+                           data['link'])
+        time.sleep(3)
 
 
 # UP(置顶|最新)动态前100回复
