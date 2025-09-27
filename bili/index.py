@@ -5,8 +5,8 @@ from urllib.parse import quote, urlencode
 import time
 from datetime import datetime
 import copy
-from script.push import push, push_dynamic, push_dingding, push_error, push_dingding_single, push_dingding_test, push_dingding_by_sign
-
+from script.push import push, push_dynamic, push_dingding, push_error, push_dingding_single, push_dingding_test, push_dingding_by_sign, push_dingding_sign_by_up
+from config import up_list
 # 设置超时时间
 
 
@@ -31,23 +31,6 @@ class TimeoutSession(requests.Session):
 requests_session = TimeoutSession(default_timeout=(5, 12))
 
 push_text_len = 22
-up_list = [
-    {
-        'id': '0',
-        'name': '莫大',
-        'uname': '莫大',
-        'mid': '525121722',
-        'roomId': '23229268'
-    },
-    {
-        'id': '1',
-        'name': '笨总',
-        'uname': '笨总',
-        'mid': '11473291',
-        'roomId': '27805029'
-    }
-]
-
 
 bili_moda_opus_link = 'https://www.bilibili.com/opus/'
 live_start_time = None
@@ -167,6 +150,8 @@ def monitor_bili_dynamic(UP):
                 'content':  text,
                 'link': jump_url
             }
+            push_dingding_sign_by_up(UP, data, ['ding_key_benben'])
+
             # push_dingding_by_sign(data, ['ding_key_debug'])
             push_dingding(data['label'] + ' ' +
                           data['title'], data['content'], data['link'])
@@ -275,11 +260,19 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
             m_tg_top[UP["id"]] = top_id
         elif top_id != m_tg_top[UP["id"]]:
             top_msg = msg
+            msg_data = {
+                'label': UP["uname"],
+                'title': '最新置顶评论',
+                'content':  top_msg,
+                'link': link
+            }
+            push_dingding_sign_by_up(UP, msg_data, ['ding_key_benben'])
             # push(UP["name"]+'置顶评论',top_msg, link)
             # push_dynamic(UP["name"],2,top_msg,link,ctime)
             push_dingding(UP["name"]+'最新置顶评论', top_msg, link)
             push_dingding_test(UP["name"]+'最新置顶评论', top_msg, link)
             push_dingding_single(UP, '最新置顶评论', top_msg, link)
+
             m_tg_top[UP["id"]] = top_id
         monitor_bili_reply({'oid': jump_id, 'link': link,
                            'root': rpid, 'rcount': rcount}, UP)
@@ -311,21 +304,23 @@ def monitor_bili_reply(options, UP):
         response = requests_session.get(url, headers=headers_bili)
         if response.status_code != 200:
             Wlog_info('monitor_bili_reply: not 200')
-            return
+            continue
         res = response.json()
         if 'data' not in res:
             Wlog_info('monitor_bili_reply: not data' +
                       str(res['code']) + '---' + res['message'])
-            return
+            continue
         data = res['data']
         if not bool(data) or 'replies' not in data:
-            return
+            continue
         UP_mid = ''
         if 'mid' in data['upper']:
             UP_mid = str(data['upper']['mid'])
         if UP_mid == '':
             UP_mid = UP['mid']
         replies = data['replies']
+        if not isinstance(replies, (list, tuple)):
+            continue
         root = data['root']
         root_msg = root['content']['message']
         if root_msg and isinstance(root_msg, str):
@@ -554,6 +549,13 @@ def monitor_bili_live_roomId(UP):
             m_live_t[UP['mid']] = datetime.now()
             m_live_f[UP['mid']] = True
             text = '直播开始啦'
+            msg_data = {
+                'label': UP["name"],
+                'title': '直播',
+                'content':  text,
+                'link': live_url
+            }
+            push_dingding_sign_by_up(UP, msg_data, ['ding_key_benben'])
             # push(UP["name"]+'直播',text,live_url)
             # push_dynamic(UP["name"],3,text,live_url)
             push_dingding(UP["name"]+'直播', text, live_url)
@@ -563,6 +565,13 @@ def monitor_bili_live_roomId(UP):
             live_minute = get_live_time(m_live_t[UP['mid']])
             m_live_f[UP['mid']] = False
             text = f'直播结束了(时长: {str(live_minute)}分钟)'
+            msg_data = {
+                'label': UP["name"],
+                'title': '直播',
+                'content':  text,
+                'link': live_url
+            }
+            push_dingding_sign_by_up(UP, msg_data, ['ding_key_benben'])
             # push(UP["name"]+'直播',text,live_url)
             # push_dynamic(UP["name"],3,text,live_url)
             push_dingding(UP["name"]+'直播', text, live_url)

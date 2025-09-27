@@ -6,6 +6,9 @@ import base64
 import urllib.parse
 import requests
 import json
+
+from config import ding_key_list
+
 send_key = {}
 ding_key = {}
 ding_key_benben = {}
@@ -208,6 +211,49 @@ def push_dingding_by_sign(msg_data, token_keys=[]):
 
     for i in range(len(tokens)):
         item = tokens[i].split('&&')
+        token = item[0]
+        secret = item[1]
+        url = DING_URL + token + get_dingding_sign(secret)
+
+        title_temp = msg_data['label'] + ' ' + msg_data['title']
+
+        title = f'{title_temp} {msg_data["content"][0:push_text_len]}'
+
+        text = f'#### { title_temp } \n\n {msg_data["content"]}'
+        if 'link' in msg_data:
+            text = f'{text} \n\n [直达链接]({msg_data["link"]})'
+        if 'img' in msg_data:
+            text = f'{text} \n\n ![图片]({msg_data["img"]})'
+        if ad['ad_info']:
+            text = f'{text} \n\n {ad["ad_info"]}'
+
+        data = {
+            "msgtype": "markdown",
+            "markdown": {
+                "title": title,
+                "text": text
+            }
+        }
+        requests_session.post(url, json.dumps(data), headers=global_headers)
+
+
+def push_dingding_sign_by_up(UP, msg_data, token_keys=[]):
+    global ding_key_list
+    global DING_URL
+    global push_text_len
+    global global_headers
+    tokens = []
+    if len(token_keys) < 1:
+        token_keys = UP['keys']
+
+    for item in token_keys:
+        current = next(
+            (item1 for item1 in ding_key_list if item1['mid'] == item), None)
+        if current and UP['mid'] in current['ups']:
+            tokens = tokens + current['ding_keys']
+
+    for tokenTemp in tokens:
+        item = tokenTemp
         token = item[0]
         secret = item[1]
         url = DING_URL + token + get_dingding_sign(secret)
