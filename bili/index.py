@@ -150,7 +150,7 @@ def monitor_bili_dynamic(UP):
                 'content':  text,
                 'link': jump_url
             }
-            push_dingding_sign_by_up(UP, data, ['ding_key_benben'])
+            push_dingding_sign_by_up(UP, data)
 
             # push_dingding_by_sign(data, ['ding_key_debug'])
             push_dingding(data['label'] + ' ' +
@@ -165,6 +165,7 @@ def monitor_bili_dynamic(UP):
                 'title': '被删除动态',
                 'content':  m_tg[UP['mid']]['text'],
             }
+            push_dingding_sign_by_up(UP, data, ['ding_key_all'])
             # push_dingding_by_sign(data, ['ding_key_debug'])
             push_dingding_test(data['label'] + ' ' +
                                data['title'], data['content'])
@@ -266,7 +267,7 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
                 'content':  top_msg,
                 'link': link
             }
-            push_dingding_sign_by_up(UP, msg_data, ['ding_key_benben'])
+            push_dingding_sign_by_up(UP, msg_data)
             # push(UP["name"]+'置顶评论',top_msg, link)
             # push_dynamic(UP["name"],2,top_msg,link,ctime)
             push_dingding(UP["name"]+'最新置顶评论', top_msg, link)
@@ -360,6 +361,7 @@ def monitor_bili_reply(options, UP):
             'link': options['link']
         }
         # push_dingding_by_sign(data, ['ding_key_debug'])
+        push_dingding_sign_by_up(UP, data, ['ding_key_all'])
         push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
                            data['link'])
         time.sleep(3)
@@ -487,6 +489,7 @@ def monitor_bili_top_reply(UP, options):
             'content':  content,
             'link': options['link']
         }
+        push_dingding_sign_by_up(UP, data, ['ding_key_all'])
         # push_dingding_by_sign(data, ['ding_key_debug'])
         push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
                            data['link'])
@@ -555,7 +558,7 @@ def monitor_bili_live_roomId(UP):
                 'content':  text,
                 'link': live_url
             }
-            push_dingding_sign_by_up(UP, msg_data, ['ding_key_benben'])
+            push_dingding_sign_by_up(UP, msg_data)
             # push(UP["name"]+'直播',text,live_url)
             # push_dynamic(UP["name"],3,text,live_url)
             push_dingding(UP["name"]+'直播', text, live_url)
@@ -571,7 +574,7 @@ def monitor_bili_live_roomId(UP):
                 'content':  text,
                 'link': live_url
             }
-            push_dingding_sign_by_up(UP, msg_data, ['ding_key_benben'])
+            push_dingding_sign_by_up(UP, msg_data)
             # push(UP["name"]+'直播',text,live_url)
             # push_dynamic(UP["name"],3,text,live_url)
             push_dingding(UP["name"]+'直播', text, live_url)
