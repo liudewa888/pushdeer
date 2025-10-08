@@ -253,7 +253,7 @@ def push_dingding_sign_by_up(UP, msg_data, token_keys=[]):
             tokens = tokens + current['ding_keys']
 
     for tokenTemp in tokens:
-        item = tokenTemp
+        item = tokenTemp.split('&&')
         token = item[0]
         secret = item[1]
         url = DING_URL + token + get_dingding_sign(secret)
