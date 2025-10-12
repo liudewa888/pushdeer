@@ -276,7 +276,7 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
 
             m_tg_top[UP["id"]] = top_id
         monitor_bili_reply({'oid': jump_id, 'link': link,
-                           'root': rpid, 'rcount': rcount}, UP)
+                           'root': rpid, 'rcount': rcount,'type':type}, UP)
     else:
         if not is_login():
             noLogin = True
@@ -301,19 +301,20 @@ def monitor_bili_reply(options, UP):
         time.sleep(3)
         # url = 'http://liudewa.cc/test/monitor_bili_reply.json'
         # response = requests_session.get(url)
-        url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type=17&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
+        url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type={options["type"]}&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
         response = requests_session.get(url, headers=headers_bili)
         if response.status_code != 200:
             Wlog_info('monitor_bili_reply: not 200')
             continue
         res = response.json()
-        if 'data' not in res:
-            Wlog_info('monitor_bili_reply: not data' +
+        if 'data' not in res or not bool(res['data']):
+            Wlog_info('monitor_bili_reply: data False' +
                       str(res['code']) + '---' + res['message'])
             continue
         data = res['data']
-        if not bool(data) or 'replies' not in data:
-            continue
+        if 'replies' not in data:
+           Wlog_info('monitor_bili_reply: not replies')
+           continue
         UP_mid = ''
         if 'mid' in data['upper']:
             UP_mid = str(data['upper']['mid'])
