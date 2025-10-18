@@ -35,7 +35,7 @@ requests_session = TimeoutSession(default_timeout=(5, 12))
 ding_key_dicts = {
     'ding_key_debug': ding_key_debug,
 }
-push_text_len = 22
+push_text_len = 120
 global_headers = {'Content-Type': 'application/json'}
 DING_URL = 'https://oapi.dingtalk.com/robot/send?access_token='
 
@@ -260,14 +260,20 @@ def push_dingding_sign_by_up(UP, msg_data, token_keys=[]):
 
         title_temp = msg_data['label'] + ' ' + msg_data['title']
 
-        title = f'{title_temp} {msg_data["content"][0:push_text_len]}'
+        title = f'{title_temp} {msg_data["content"]}'
 
-        text = f'#### { title_temp } \n\n {msg_data["content"]}'
-        if 'link' in msg_data:
+        title = title[0:push_text_len]
+        text = ''
+        if bool(title_temp.strip()):
+            text = f'##### **{ title_temp.strip() }**'
+        if msg_data.get("content"):
+            text = f'{text} \n\n {msg_data["content"]}'
+
+        if msg_data.get('link'):
             text = f'{text} \n\n [直达链接]({msg_data["link"]})'
-        if 'img' in msg_data:
+        if msg_data.get('img'):
             text = f'{text} \n\n ![图片]({msg_data["img"]})'
-        if ad['ad_info']:
+        if ad.get('ad_info') :
             text = f'{text} \n\n {ad["ad_info"]}'
 
         data = {

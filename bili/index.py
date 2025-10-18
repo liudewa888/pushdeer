@@ -30,8 +30,8 @@ class TimeoutSession(requests.Session):
 
 requests_session = TimeoutSession(default_timeout=(5, 12))
 
-push_text_len = 22
-
+push_text_len = 20
+time_init_diff = 60 * 3
 bili_moda_opus_link = 'https://www.bilibili.com/opus/'
 live_start_time = None
 noLogin = False
@@ -167,8 +167,6 @@ def monitor_bili_dynamic(UP):
             }
             push_dingding_sign_by_up(UP, data, ['ding_key_all'])
             # push_dingding_by_sign(data, ['ding_key_debug'])
-            push_dingding_test(data['label'] + ' ' +
-                               data['title'], data['content'])
         m_tg[UP['mid']]['id'] = id
         m_tg[UP['mid']]['ctime'] = ctime
         m_tg[UP['mid']]['text'] = textTemp
@@ -268,16 +266,15 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
                 'link': link
             }
             push_dingding_sign_by_up(UP, msg_data)
-            # push(UP["name"]+'置顶评论',top_msg, link)
-            # push_dynamic(UP["name"],2,top_msg,link,ctime)
-            push_dingding(UP["name"]+'最新置顶评论', top_msg, link)
-            push_dingding_test(UP["name"]+'最新置顶评论', top_msg, link)
-            push_dingding_single(UP, '最新置顶评论', top_msg, link)
+            push_dingding(msg_data['label'] + ' ' + msg_data['title'], top_msg, link)
+            push_dingding_test(msg_data['label'] + ' ' + msg_data['title'], top_msg, link)
+            push_dingding_single(UP, msg_data['title'], top_msg, link)
 
             m_tg_top[UP["id"]] = top_id
         monitor_bili_reply({'oid': jump_id, 'link': link,
-                           'root': rpid, 'rcount': rcount,'type':type}, UP)
+                           'root': rpid, 'rcount': rcount, 'type': type}, UP)
     else:
+        Wlog_info('def monitor_bili_top: jump_id is False')
         if not is_login():
             noLogin = True
 
@@ -291,7 +288,7 @@ def monitor_bili_reply(options, UP):
     global push_text_len
     target_list = []
     if options["oid"] not in m_reply_reply:
-        m_reply_reply[options["oid"]] = int(time.time())
+        m_reply_reply[options["oid"]] = int(time.time())-time_init_diff
 
     pageSize = 20
     pageTotal = options['rcount'] // pageSize + 1
@@ -313,8 +310,8 @@ def monitor_bili_reply(options, UP):
             continue
         data = res['data']
         if 'replies' not in data:
-           Wlog_info('monitor_bili_reply: not replies')
-           continue
+            Wlog_info('monitor_bili_reply: not replies')
+            continue
         UP_mid = ''
         if 'mid' in data['upper']:
             UP_mid = str(data['upper']['mid'])
@@ -357,14 +354,12 @@ def monitor_bili_reply(options, UP):
             content = content + ' \n\n ' + item2['parent_comment']
         data = {
             'label': UP["uname"],
-            'title': '最新置顶评论回复',
+            'title': '置顶评论最新回复',
             'content':  content,
             'link': options['link']
         }
         # push_dingding_by_sign(data, ['ding_key_debug'])
         push_dingding_sign_by_up(UP, data, ['ding_key_all'])
-        push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
-                           data['link'])
         time.sleep(3)
 
 
@@ -378,7 +373,7 @@ def monitor_bili_top_reply(UP, options):
     target_list = []
     next_page = ""
     if options["oid"] not in m_top_reply:
-        m_top_reply[options["oid"]] = int(time.time())
+        m_top_reply[options["oid"]] = int(time.time())-time_init_diff
     is_end = False
     for i in range(5):
         time.sleep(4)
@@ -406,18 +401,17 @@ def monitor_bili_top_reply(UP, options):
             continue
         res = response.json()
         if 'data' not in res:
-            Wlog_info('monitor_bili_top_reply: no data' +
-                      str(res['code'])+'---' + res['message'])
-            Wlog_info(response.url)
+            # Wlog_info('monitor_bili_top_reply: no data' +
+            #           str(res['code'])+'---' + res['message'])
+            # Wlog_info(response.url)
             continue
         data = res['data']
         is_end = data['cursor']['is_end']
         pagination_reply = data['cursor']['pagination_reply']
         if 'next_offset' in pagination_reply:
             next_page = pagination_reply['next_offset']
-        if 'replies' not in data:
-            Wlog_info('monitor_bili_top_reply: ' + 'no replies ')
-            Wlog_info(url)
+        if  not data.get('replies'):
+            Wlog_info('monitor_bili_top_reply: ' + 'no replies')
             continue
         replies = data['replies']
         for item in replies:
@@ -486,14 +480,12 @@ def monitor_bili_top_reply(UP, options):
             content = content + ' \n\n ' + item2['parent_comment']
         data = {
             'label': UP["uname"],
-            'title': '(置顶|最新)动态前100回复',
+            'title': '动态最新回复',
             'content':  content,
             'link': options['link']
         }
         push_dingding_sign_by_up(UP, data, ['ding_key_all'])
         # push_dingding_by_sign(data, ['ding_key_debug'])
-        push_dingding_test(data['label'] + ' ' + data['title'], data['content'],
-                           data['link'])
         time.sleep(3)
 
 
