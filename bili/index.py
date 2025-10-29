@@ -5,7 +5,7 @@ from urllib.parse import quote, urlencode
 import time
 from datetime import datetime
 import copy
-from script.push import push, push_dynamic, push_dingding, push_error, push_dingding_single, push_dingding_test, push_dingding_by_sign, push_dingding_sign_by_up
+from script.push import push_dingding, push_error, push_dingding_single, push_dingding_test, push_dingding_by_sign, push_dingding_sign_by_up
 from config import up_list
 # 设置超时时间
 
@@ -23,8 +23,8 @@ class TimeoutSession(requests.Session):
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
             error_response = Response()
             error_response.status_code = 400
-            error_response._content = b'{"error": "Request timed out"}'
-            Wlog_info('错误: Request timed out')
+            error_response._content = b'{"error": "Request error"}'
+            Wlog_info('TimeoutSession: Request error ' + str(args[1]))
             return error_response
 
 
@@ -153,19 +153,19 @@ def monitor_bili_dynamic(UP):
             push_dingding_sign_by_up(UP, data)
 
             # push_dingding_by_sign(data, ['ding_key_debug'])
-            push_dingding(data['label'] + ' ' +
-                          data['title'], data['content'], data['link'])
-            push_dingding_test(data['label'] + ' ' +
-                               data['title'], data['content'], data['link'])
-            push_dingding_single(
-                UP, data['title'], data['content'], data['link'])
+            # push_dingding(data['label'] + ' ' +
+            #               data['title'], data['content'], data['link'])
+            # push_dingding_test(data['label'] + ' ' +
+            #                    data['title'], data['content'], data['link'])
+            # push_dingding_single(
+            #     UP, data['title'], data['content'], data['link'])
         else:
             data = {
                 'label': UP["uname"],
                 'title': '被删除动态',
                 'content':  m_tg[UP['mid']]['text'],
             }
-            push_dingding_sign_by_up(UP, data, ['ding_key_all'])
+            push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip'])
             # push_dingding_by_sign(data, ['ding_key_debug'])
         m_tg[UP['mid']]['id'] = id
         m_tg[UP['mid']]['ctime'] = ctime
@@ -266,9 +266,9 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
                 'link': link
             }
             push_dingding_sign_by_up(UP, msg_data)
-            push_dingding(msg_data['label'] + ' ' + msg_data['title'], top_msg, link)
-            push_dingding_test(msg_data['label'] + ' ' + msg_data['title'], top_msg, link)
-            push_dingding_single(UP, msg_data['title'], top_msg, link)
+            # push_dingding(msg_data['label'] + ' ' + msg_data['title'], top_msg, link)
+            # push_dingding_test(msg_data['label'] + ' ' + msg_data['title'], top_msg, link)
+            # push_dingding_single(UP, msg_data['title'], top_msg, link)
 
             m_tg_top[UP["id"]] = top_id
         monitor_bili_reply({'oid': jump_id, 'link': link,
@@ -359,7 +359,7 @@ def monitor_bili_reply(options, UP):
             'link': options['link']
         }
         # push_dingding_by_sign(data, ['ding_key_debug'])
-        push_dingding_sign_by_up(UP, data, ['ding_key_all'])
+        push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip'])
         time.sleep(3)
 
 
@@ -484,7 +484,7 @@ def monitor_bili_top_reply(UP, options):
             'content':  content,
             'link': options['link']
         }
-        push_dingding_sign_by_up(UP, data, ['ding_key_all'])
+        push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip'])
         # push_dingding_by_sign(data, ['ding_key_debug'])
         time.sleep(3)
 
@@ -554,9 +554,9 @@ def monitor_bili_live_roomId(UP):
             push_dingding_sign_by_up(UP, msg_data)
             # push(UP["name"]+'直播',text,live_url)
             # push_dynamic(UP["name"],3,text,live_url)
-            push_dingding(UP["name"]+'直播', text, live_url)
-            push_dingding_test(UP["name"]+'直播', text, live_url)
-            push_dingding_single(UP, '直播', text, live_url)
+            # push_dingding(UP["name"]+'直播', text, live_url)
+            # push_dingding_test(UP["name"]+'直播', text, live_url)
+            # push_dingding_single(UP, '直播', text, live_url)
         if (live_status == 0 and m_live_f[UP['mid']]):
             live_minute = get_live_time(m_live_t[UP['mid']])
             m_live_f[UP['mid']] = False
@@ -570,9 +570,9 @@ def monitor_bili_live_roomId(UP):
             push_dingding_sign_by_up(UP, msg_data)
             # push(UP["name"]+'直播',text,live_url)
             # push_dynamic(UP["name"],3,text,live_url)
-            push_dingding(UP["name"]+'直播', text, live_url)
-            push_dingding_test(UP["name"]+'直播', text, live_url)
-            push_dingding_single(UP, '直播', text, live_url)
+            # push_dingding(UP["name"]+'直播', text, live_url)
+            # push_dingding_test(UP["name"]+'直播', text, live_url)
+            # push_dingding_single(UP, '直播', text, live_url)
 
 
 def bili_main():
