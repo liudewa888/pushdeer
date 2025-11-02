@@ -165,7 +165,7 @@ def monitor_bili_dynamic(UP):
                 'title': '被删除动态',
                 'content':  m_tg[UP['mid']]['text'],
             }
-            push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip'])
+            push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip','ding_key_moda_vip','ding_key_benben_vip'])
             # push_dingding_by_sign(data, ['ding_key_debug'])
         m_tg[UP['mid']]['id'] = id
         m_tg[UP['mid']]['ctime'] = ctime
@@ -359,7 +359,7 @@ def monitor_bili_reply(options, UP):
             'link': options['link']
         }
         # push_dingding_by_sign(data, ['ding_key_debug'])
-        push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip'])
+        push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip','ding_key_moda_vip','ding_key_benben_vip'])
         time.sleep(3)
 
 
@@ -484,7 +484,7 @@ def monitor_bili_top_reply(UP, options):
             'content':  content,
             'link': options['link']
         }
-        push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip'])
+        push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip','ding_key_moda_vip','ding_key_benben_vip'])
         # push_dingding_by_sign(data, ['ding_key_debug'])
         time.sleep(3)
 
