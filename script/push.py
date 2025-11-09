@@ -243,6 +243,7 @@ def push_dingding_sign_by_up(UP, msg_data, token_keys=[]):
     global push_text_len
     global global_headers
     tokens = []
+    ads = []
     if len(token_keys) < 1:
         token_keys = UP['keys']
 
@@ -251,8 +252,9 @@ def push_dingding_sign_by_up(UP, msg_data, token_keys=[]):
             (item1 for item1 in ding_key_list if item1['mid'] == item), None)
         if current and UP['mid'] in current['ups']:
             tokens = tokens + current['ding_keys']
+            ads.extend([current.get('ad', False)] * len(current['ding_keys']))
 
-    for tokenTemp in tokens:
+    for i, tokenTemp in enumerate(tokens):
         item = tokenTemp.split('&&')
         token = item[0]
         secret = item[1]
@@ -273,8 +275,9 @@ def push_dingding_sign_by_up(UP, msg_data, token_keys=[]):
             text = f'{text} \n\n [直达链接]({msg_data["link"]})'
         if msg_data.get('img'):
             text = f'{text} \n\n ![图片]({msg_data["img"]})'
-        if ad.get('ad_info') :
-            text = f'{text} \n\n {ad["ad_info"]}'
+        if ad.get('ad_info'):
+            if len(ads) > i and ads[i]:
+                text = f'{text} \n\n {ad["ad_info"]}'
 
         data = {
             "msgtype": "markdown",
