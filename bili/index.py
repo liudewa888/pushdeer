@@ -5,7 +5,7 @@ from urllib.parse import quote, urlencode
 import time
 from datetime import datetime
 import copy
-from script.push import push_dingding, push_error, push_dingding_single, push_dingding_test, push_dingding_by_sign, push_dingding_sign_by_up
+from script.push import push_error, push_dingding_sign_by_up
 from config import up_list
 # 设置超时时间
 
@@ -32,6 +32,7 @@ requests_session = TimeoutSession(default_timeout=(5, 12))
 
 push_text_len = 20
 time_init_diff = 60 * 3
+
 bili_moda_opus_link = 'https://www.bilibili.com/opus/'
 live_start_time = None
 noLogin = False
@@ -53,7 +54,6 @@ headers_bili = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36 Edg/113.0.1774.57'
 }
 
-
 def is_login():
     global noLogin
     global headers_bili
@@ -72,7 +72,6 @@ def is_login():
         noLogin = True
         return False
 
-
 def get_w_rid(params):
     m = urlencode(params, quote_via=quote)
     string = m + "ea1db124af3c7062474693fa704f4ff8"
@@ -82,7 +81,6 @@ def get_w_rid(params):
 
 # UP动态
 m_tg = {}
-
 
 def monitor_bili_dynamic(UP):
     global m_tg
@@ -103,14 +101,15 @@ def monitor_bili_dynamic(UP):
         Wlog_info('monitor_bili_dynamic: not 200')
         return
     res = response.json()
-    if 'data' not in res:
-        Wlog_info('monitor_bili_dynamic: not data' +
+    items = res.get('data', {}).get('items', [])
+    if not items:
+        Wlog_info('monitor_bili_dynamic: not items' +
                   str(res['code']) + '---' + res['message'])
         return
-    list = res['data']['items'][0]
+    list = items[0]
     if 'module_tag' in list['modules']:
         m_module_tag = list['modules']['module_tag']
-        if (m_module_tag['text'] == '置顶'):
+        if (m_module_tag and m_module_tag['text'] == '置顶'):
             list = res['data']['items'][1]
     rid_str = list['basic']['rid_str']
     type = str(list['basic']['comment_type'])
@@ -124,11 +123,11 @@ def monitor_bili_dynamic(UP):
         text = text['text']
     else:
         text = list['modules']['module_dynamic']['major']
-        if 'archive' in text:
+        if text.get('archive'):
             text = text['archive']['title']
-        elif 'ugc_season' in text:
+        elif text.get('ugc_season'):
             text = text['ugc_season']['title']
-        elif 'opus' in text:
+        elif text.get('opus'):
             opus = text['opus']
             if 'summary' in opus:
                 text = opus['summary']['text']
@@ -151,22 +150,15 @@ def monitor_bili_dynamic(UP):
                 'link': jump_url
             }
             push_dingding_sign_by_up(UP, data)
-
             # push_dingding_by_sign(data, ['ding_key_debug'])
-            # push_dingding(data['label'] + ' ' +
-            #               data['title'], data['content'], data['link'])
-            # push_dingding_test(data['label'] + ' ' +
-            #                    data['title'], data['content'], data['link'])
-            # push_dingding_single(
-            #     UP, data['title'], data['content'], data['link'])
         else:
             data = {
                 'label': UP["uname"],
                 'title': '被删除动态',
                 'content':  m_tg[UP['mid']]['text'],
             }
-            push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip','ding_key_moda_vip','ding_key_benben_vip'])
             # push_dingding_by_sign(data, ['ding_key_debug'])
+            push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip','ding_key_moda_vip','ding_key_benben_vip'])
         m_tg[UP['mid']]['id'] = id
         m_tg[UP['mid']]['ctime'] = ctime
         m_tg[UP['mid']]['text'] = textTemp
@@ -212,11 +204,11 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
         for i in range(len(list)):
             if 'module_tag' in list[i]['modules']:
                 m_module_tag = list[i]['modules']['module_tag']
-                if (m_module_tag['text'] == '置顶'):
+                if (m_module_tag and m_module_tag['text'] == '置顶'):
                     opus_id = list[i]['id_str']
                     link = bili_moda_opus_link + opus_id
                     # 默认类型
-                    # type = '17'
+                    #  type = '17'
                     # id_str = list[i]['id_str']
                     basic = list[i]['basic']
                     type = str(basic['comment_type'])
@@ -236,6 +228,7 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
         if 'data' not in res:
             Wlog_info('monitor_bili_top2: not data' +
                       str(res['code']) + '---' + res['message'])
+            #Wlog_info(url)
             return
         data = res['data']
         if 'top_replies' not in data:
@@ -266,18 +259,13 @@ def monitor_bili_top(UP, jump_id='', link='', type=''):
                 'link': link
             }
             push_dingding_sign_by_up(UP, msg_data)
-            # push_dingding(msg_data['label'] + ' ' + msg_data['title'], top_msg, link)
-            # push_dingding_test(msg_data['label'] + ' ' + msg_data['title'], top_msg, link)
-            # push_dingding_single(UP, msg_data['title'], top_msg, link)
-
             m_tg_top[UP["id"]] = top_id
         monitor_bili_reply({'oid': jump_id, 'link': link,
-                           'root': rpid, 'rcount': rcount, 'type': type}, UP)
+                           'root': rpid, 'rcount': rcount,'type':type}, UP)
     else:
-        Wlog_info('def monitor_bili_top: jump_id is False')
-        if not is_login():
-            noLogin = True
-
+         Wlog_info('def monitor_bili_top: jump_id is False')
+       # if not is_login():
+       #     noLogin = True
 
 # UP置顶回复(前40)
 m_reply_reply = {}
@@ -301,8 +289,8 @@ def monitor_bili_reply(options, UP):
         url = f'https://api.bilibili.com/x/v2/reply/reply?oid={options["oid"]}&type={options["type"]}&root={options["root"]}&ps={pageSize}&pn={pageIndex}&web_location=444.42'
         response = requests_session.get(url, headers=headers_bili)
         if response.status_code != 200:
-            Wlog_info('monitor_bili_reply: not 200')
-            continue
+          Wlog_info('monitor_bili_reply: not 200')
+          continue
         res = response.json()
         if 'data' not in res or not bool(res['data']):
             Wlog_info('monitor_bili_reply: data False' +
@@ -310,21 +298,23 @@ def monitor_bili_reply(options, UP):
             continue
         data = res['data']
         if 'replies' not in data:
-            Wlog_info('monitor_bili_reply: not replies')
-            continue
+           Wlog_info('monitor_bili_reply: not replies')
+           continue
         UP_mid = ''
         if 'mid' in data['upper']:
             UP_mid = str(data['upper']['mid'])
         if UP_mid == '':
             UP_mid = UP['mid']
         replies = data['replies']
-        if not isinstance(replies, (list, tuple)):
-            continue
         root = data['root']
-        root_msg = root['content']['message']
+        root_msg = ''
+        if root.get('content'):
+            root_msg = root['content']['message']
         if root_msg and isinstance(root_msg, str):
             root_msg = root_msg.replace('\n', ' ')[0:push_text_len-10]
-
+        if not isinstance(replies, (list, tuple)):
+            continue
+        # Wlog_info('monitor_bili_reply:  ' + replies[0]['rpid_str'])
         for item in replies:
             if UP_mid == str(item['mid_str']) and item['ctime'] > m_reply_reply[options["oid"]]:
                 if ('content' not in item):
@@ -362,14 +352,12 @@ def monitor_bili_reply(options, UP):
         push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip','ding_key_moda_vip','ding_key_benben_vip'])
         time.sleep(3)
 
-
 # UP(置顶|最新)动态前100回复
 m_top_reply = {}
 
 
 def monitor_bili_top_reply(UP, options):
     global m_top_reply
-    global push_text_len
     target_list = []
     next_page = ""
     if options["oid"] not in m_top_reply:
@@ -401,17 +389,21 @@ def monitor_bili_top_reply(UP, options):
             continue
         res = response.json()
         if 'data' not in res:
-            # Wlog_info('monitor_bili_top_reply: no data' +
-            #           str(res['code'])+'---' + res['message'])
-            # Wlog_info(response.url)
+            #Wlog_info('monitor_bili_top_reply: no data' +
+            #       str(res['code'])+'---' + res['message'])
+            #Wlog_info(response.url)
             continue
         data = res['data']
         is_end = data['cursor']['is_end']
         pagination_reply = data['cursor']['pagination_reply']
         if 'next_offset' in pagination_reply:
             next_page = pagination_reply['next_offset']
-        if  not data.get('replies'):
-            Wlog_info('monitor_bili_top_reply: ' + 'no replies')
+        if 'replies' not in data:
+            Wlog_info('monitor_bili_top_reply: ' + 'no replies ')
+            Wlog_info(url)
+            continue
+        if not bool(data['replies']):
+            Wlog_info('monitor_bili_top_reply: ' + "data['replies'] is None")
             continue
         replies = data['replies']
         for item in replies:
@@ -441,6 +433,8 @@ def monitor_bili_top_reply(UP, options):
             is_up_reply = False
             if 'replies' in item:
                 up_replies = item['replies']
+                if not isinstance(up_replies , list):
+                        return
                 for item1 in up_replies:
                     if UP['mid'] == str(item1['mid']) and item1['ctime'] > m_top_reply[options["oid"]]:
                         if ('content' not in item1):
@@ -484,8 +478,8 @@ def monitor_bili_top_reply(UP, options):
             'content':  content,
             'link': options['link']
         }
-        push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip','ding_key_moda_vip','ding_key_benben_vip'])
         # push_dingding_by_sign(data, ['ding_key_debug'])
+        push_dingding_sign_by_up(UP, data, ['ding_key_all','ding_key_daimi_vip','ding_key_moda_vip','ding_key_benben_vip'])
         time.sleep(3)
 
 
@@ -552,11 +546,6 @@ def monitor_bili_live_roomId(UP):
                 'link': live_url
             }
             push_dingding_sign_by_up(UP, msg_data)
-            # push(UP["name"]+'直播',text,live_url)
-            # push_dynamic(UP["name"],3,text,live_url)
-            # push_dingding(UP["name"]+'直播', text, live_url)
-            # push_dingding_test(UP["name"]+'直播', text, live_url)
-            # push_dingding_single(UP, '直播', text, live_url)
         if (live_status == 0 and m_live_f[UP['mid']]):
             live_minute = get_live_time(m_live_t[UP['mid']])
             m_live_f[UP['mid']] = False
@@ -568,11 +557,6 @@ def monitor_bili_live_roomId(UP):
                 'link': live_url
             }
             push_dingding_sign_by_up(UP, msg_data)
-            # push(UP["name"]+'直播',text,live_url)
-            # push_dynamic(UP["name"],3,text,live_url)
-            # push_dingding(UP["name"]+'直播', text, live_url)
-            # push_dingding_test(UP["name"]+'直播', text, live_url)
-            # push_dingding_single(UP, '直播', text, live_url)
 
 
 def bili_main():

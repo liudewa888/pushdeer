@@ -6,6 +6,7 @@ import logging
 from script.push import send_key, ding_key, error_key, push_error, ad, ding_key_benben, ding_key_test, ding_key_debug
 from bili.index import headers_bili, bili_main, log
 from xhs.index import xhs_main, log_xhs
+from utils.utils import in_range_time
 # 读取配置文件
 
 
@@ -27,7 +28,6 @@ def readConfig():
 
 
 # 写入日志
-logging.Formatter.converter = time.localtime
 logging.basicConfig(filename='running.log', format='\n%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 
@@ -58,9 +58,10 @@ def main():
     while (True):
         ii = ii + 1
         Wlog_info("当前轮次: " + str(ii))
-        # test()
-        bili_main()
-        xhs_main()
+        if in_range_time((2,0),(6,0)):
+            Wlog_info("main: free time not run")
+        else:        
+            bili_main()
         s = random.randint(30, 80)
         time.sleep(s * 2)
 
