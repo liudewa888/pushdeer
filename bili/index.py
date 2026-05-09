@@ -308,7 +308,7 @@ def monitor_bili_reply(options, UP):
         replies = data['replies']
         root = data['root']
         root_msg = ''
-        if root.get('content'):
+        if root and root.get('content'):
             root_msg = root['content']['message']
         if root_msg and isinstance(root_msg, str):
             root_msg = root_msg.replace('\n', ' ')[0:push_text_len-10]

@@ -1,4 +1,6 @@
 from datetime import datetime, time, date
+import json
+import os
 
 
 def in_range_time(start_hm, end_hm):
@@ -14,6 +16,23 @@ def in_range_time(start_hm, end_hm):
 def is_weekend():
     today = date.today()
     return today.weekday() >= 5
+
+
+def load_json(filePath):
+    if not os.path.exists(filePath):
+        return []
+    try:
+        with open(filePath, "r") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def save_json(filePath, data):
+    with open(filePath, "w") as f:
+        json.dump(data, f)
+
+
 
 if __name__ == "__main__":
     res = in_range_time((8,0),(10,0))
